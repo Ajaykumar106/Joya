@@ -554,19 +554,14 @@ auth.onAuthStateChanged(user => {
   }
 });
 
-auth.getRedirectResult().then(result => {
-  if (result && result.user) {
-    console.log('Redirect login success:', result.user.email);
-  }
-}).catch(e => console.log('Redirect error:', e.message));
-
 document.getElementById("googleBtn").onclick = async () => {
   try {
     const provider = new firebase.auth.GoogleAuthProvider();
-    await auth.signInWithRedirect(provider);
+    const result = await auth.signInWithPopup(provider);
+    console.log('Login success:', result.user.email);
   } catch(e) {
     const err = document.getElementById("authErr");
-    err.textContent = "Sign in failed. Try again.";
+    err.textContent = e.message || "Sign in failed. Try again.";
     err.style.display = "block";
   }
 };
