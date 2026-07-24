@@ -5,357 +5,58 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Riya AI — Login</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
-  
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <link rel="stylesheet" href="css/global.css"/>
   <script src="js/auth.js" defer></script>
-
   <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      background: #050510;
-      color: #fff;
-      overflow: hidden;
-      font-family: 'Inter', sans-serif;
-    }
+    body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#06060f;color:#fff;font-family:'Inter',sans-serif;overflow:hidden;position:relative;}
+    /* Subtle background glow */
+    body::before{content:'';position:absolute;top:30%;left:50%;width:500px;height:500px;background:radial-gradient(circle,rgba(124,58,237,0.12),transparent 70%);transform:translate(-50%,-50%);pointer-events:none;}
 
-    /* ── LEFT: COSMIC VISUAL ── */
-    .split-left {
-      flex: 1.2;
-      position: relative;
-      overflow: hidden;
-      background: radial-gradient(ellipse at 30% 50%, #1a0a3e 0%, #0a0618 50%, #050510 100%);
-    }
-
-    /* Stars */
-    .stars {
-      position: absolute;
-      inset: 0;
-      background-image:
-        radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.8), transparent),
-        radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.5), transparent),
-        radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.6), transparent),
-        radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.4), transparent),
-        radial-gradient(2px 2px at 160px 30px, rgba(255,255,255,0.7), transparent);
-      background-size: 200px 100px;
-      animation: twinkle 4s ease-in-out infinite alternate;
-    }
-    @keyframes twinkle {
-      0% { opacity: 0.6; }
-      100% { opacity: 1; }
-    }
-
-    /* Cosmic Orb */
-    .cosmic-orb {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -55%);
-      width: 320px;
-      height: 320px;
-    }
-    .orb-core {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 180px;
-      height: 180px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 35% 35%, #c084fc, #7c3aed 40%, #4f46e5 70%, #1e1b4b);
-      box-shadow:
-        0 0 60px rgba(139, 92, 246, 0.8),
-        0 0 120px rgba(139, 92, 246, 0.5),
-        0 0 200px rgba(124, 58, 237, 0.3),
-        inset 0 0 40px rgba(255, 255, 255, 0.1);
-      animation: breathe 4s ease-in-out infinite;
-    }
-    @keyframes breathe {
-      0%, 100% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 60px rgba(139, 92, 246, 0.8), 0 0 120px rgba(139, 92, 246, 0.5); }
-      50% { transform: translate(-50%, -50%) scale(1.08); box-shadow: 0 0 80px rgba(236, 72, 153, 0.8), 0 0 160px rgba(139, 92, 246, 0.6); }
-    }
-
-    .orb-ring {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      border-radius: 50%;
-      border: 1.5px solid;
-    }
-    .orb-ring:nth-child(2) {
-      width: 240px;
-      height: 240px;
-      transform: translate(-50%, -50%) rotateX(75deg);
-      border-color: rgba(168, 85, 247, 0.4);
-      animation: spin 8s linear infinite;
-    }
-    .orb-ring:nth-child(3) {
-      width: 280px;
-      height: 280px;
-      transform: translate(-50%, -50%) rotateX(75deg) rotateZ(60deg);
-      border-color: rgba(99, 102, 241, 0.3);
-      animation: spin 12s linear infinite reverse;
-    }
-    .orb-ring:nth-child(4) {
-      width: 310px;
-      height: 310px;
-      transform: translate(-50%, -50%) rotateX(75deg) rotateZ(120deg);
-      border-color: rgba(236, 72, 153, 0.2);
-      animation: spin 15s linear infinite;
-    }
-    @keyframes spin { 0% { rotate: 0deg; } 100% { rotate: 360deg; } }
-
-    /* Floating particles */
-    .particle {
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      border-radius: 50%;
-      background: rgba(168, 85, 247, 0.7);
-      animation: float-up linear infinite;
-    }
-    .particle:nth-child(5) { left: 20%; animation-duration: 6s; animation-delay: 0s; }
-    .particle:nth-child(6) { left: 40%; animation-duration: 8s; animation-delay: 2s; width: 3px; height: 3px; background: rgba(99, 102, 241, 0.6); }
-    .particle:nth-child(7) { left: 60%; animation-duration: 7s; animation-delay: 1s; width: 5px; height: 5px; background: rgba(236, 72, 153, 0.5); }
-    .particle:nth-child(8) { left: 75%; animation-duration: 9s; animation-delay: 3s; }
-    .particle:nth-child(9) { left: 85%; animation-duration: 6s; animation-delay: 4s; width: 3px; height: 3px; background: rgba(56, 189, 248, 0.6); }
-    @keyframes float-up {
-      0% { bottom: -10px; opacity: 0; }
-      10% { opacity: 1; }
-      90% { opacity: 1; }
-      100% { bottom: 100%; opacity: 0; }
-    }
-
-    .left-branding {
-      position: absolute;
-      bottom: 8%;
-      left: 50%;
-      transform: translateX(-50%);
-      text-align: center;
-      z-index: 10;
-    }
-    .left-branding h2 {
-      font-size: 2.2rem;
-      font-weight: 800;
-      background: linear-gradient(135deg, #e0e7ff, #a78bfa, #ec4899);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 8px;
-    }
-    .left-branding p {
-      color: rgba(255, 255, 255, 0.5);
-      font-size: 1rem;
-      font-weight: 300;
-    }
-
-    /* ── RIGHT: LOGIN FORM ── */
-    .split-right {
-      flex: 0.8;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(180deg, #0c0a1a 0%, #100e22 100%);
-      position: relative;
-      border-left: 1px solid rgba(139, 92, 246, 0.15);
-    }
-
-    .login-card {
-      width: 100%;
-      max-width: 380px;
-      padding: 44px 36px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(139, 92, 246, 0.2);
-      border-radius: 28px;
-      backdrop-filter: blur(30px);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(139, 92, 246, 0.08);
-    }
-
-    .login-logo {
-      width: 64px;
-      height: 64px;
-      margin: 0 auto 24px;
-      background: linear-gradient(135deg, #7c3aed, #3b82f6);
-      border-radius: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4);
-    }
-
-    .login-card h1 {
-      text-align: center;
-      font-size: 26px;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-    .login-card .subtitle {
-      text-align: center;
-      color: rgba(255, 255, 255, 0.45);
-      font-size: 14px;
-      margin-bottom: 32px;
-      line-height: 1.5;
-    }
-
-    .google-btn {
-      width: 100%;
-      padding: 16px;
-      background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(59, 130, 246, 0.2));
-      border: 1px solid rgba(139, 92, 246, 0.35);
-      border-radius: 14px;
-      color: white;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      transition: all 0.3s ease;
-      font-family: inherit;
-    }
-    .google-btn:hover {
-      background: linear-gradient(135deg, rgba(124, 58, 237, 0.35), rgba(59, 130, 246, 0.35));
-      border-color: rgba(139, 92, 246, 0.6);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
-    }
-    .google-btn img { width: 20px; height: 20px; }
-
-    .divider {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin: 24px 0;
-      color: rgba(255,255,255,0.25);
-      font-size: 12px;
-    }
-    .divider::before, .divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: rgba(255,255,255,0.1);
-    }
-
-    .features-row {
-      display: flex;
-      gap: 12px;
-      margin-top: 8px;
-    }
-    .feature-chip {
-      flex: 1;
-      text-align: center;
-      padding: 12px 8px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 12px;
-      font-size: 11px;
-      color: rgba(255, 255, 255, 0.5);
-    }
-    .feature-chip .emoji {
-      display: block;
-      font-size: 20px;
-      margin-bottom: 6px;
-    }
-
-    .loading-msg {
-      display: none;
-      text-align: center;
-      margin-top: 16px;
-      color: #a78bfa;
-      font-size: 13px;
-      font-weight: 500;
-      animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
-    .login-footer {
-      text-align: center;
-      margin-top: 28px;
-      font-size: 12px;
-      color: rgba(255,255,255,0.3);
-    }
-
-    @media (max-width: 900px) {
-      body { flex-direction: column; }
-      .split-left { flex: 0.6; }
-      .split-right { flex: 1; padding: 24px; }
-      .login-card { padding: 32px 24px; }
-    }
+    .login-card{width:100%;max-width:400px;padding:48px 40px;background:rgba(255,255,255,0.03);border:1px solid rgba(139,92,246,0.18);border-radius:28px;backdrop-filter:blur(30px);box-shadow:0 24px 80px rgba(0,0,0,0.5),0 0 60px rgba(124,58,237,0.06);text-align:center;}
+    .login-logo{width:68px;height:68px;margin:0 auto 28px;background:linear-gradient(135deg,#7c3aed,#3b82f6);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 10px 30px rgba(124,58,237,0.4);}
+    .login-card h1{font-size:28px;font-weight:700;margin-bottom:6px;}
+    .login-card h1 span{color:#a78bfa;}
+    .login-card .sub{color:rgba(255,255,255,0.4);font-size:14px;margin-bottom:36px;line-height:1.5;}
+    .google-btn{width:100%;padding:16px;background:linear-gradient(135deg,rgba(124,58,237,0.2),rgba(59,130,246,0.2));border:1px solid rgba(139,92,246,0.35);border-radius:14px;color:white;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;transition:all .3s;font-family:inherit;}
+    .google-btn:hover{background:linear-gradient(135deg,rgba(124,58,237,0.35),rgba(59,130,246,0.35));border-color:rgba(139,92,246,0.6);transform:translateY(-2px);box-shadow:0 8px 24px rgba(124,58,237,0.3);}
+    .google-btn img{width:20px;height:20px;}
+    .divider{display:flex;align-items:center;gap:16px;margin:28px 0;color:rgba(255,255,255,0.2);font-size:12px;}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.08);}
+    .features{display:flex;gap:12px;}
+    .feat{flex:1;text-align:center;padding:14px 8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:14px;font-size:11px;color:rgba(255,255,255,0.45);}
+    .feat .icon{display:block;font-size:22px;margin-bottom:6px;}
+    .footer{margin-top:28px;font-size:12px;color:rgba(255,255,255,0.25);}
+    .loader{display:none;margin-top:16px;color:#a78bfa;font-size:13px;animation:pulse 1.5s infinite;}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
   </style>
 </head>
 <body>
-
-  <!-- LEFT: Cosmic Visual -->
-  <div class="split-left">
-    <div class="stars"></div>
-    <div class="cosmic-orb">
-      <div class="orb-core"></div>
-      <div class="orb-ring"></div>
-      <div class="orb-ring"></div>
-      <div class="orb-ring"></div>
+  <div class="login-card">
+    <div class="login-logo">✦</div>
+    <h1>Riya<span>.AI</span></h1>
+    <p class="sub">Your AI. Your Universe.<br/>Sign in to access your intelligent dashboard.</p>
+    <button class="google-btn" id="loginBtn" onclick="doLogin()">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="G"/>
+      Continue with Google
+    </button>
+    <div class="loader" id="loader">Authenticating… Please wait</div>
+    <div class="divider">Powered by AI</div>
+    <div class="features">
+      <div class="feat"><span class="icon">🧠</span>Deep Thinking</div>
+      <div class="feat"><span class="icon">📊</span>Live Markets</div>
+      <div class="feat"><span class="icon">🚀</span>AI Agents</div>
     </div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="left-branding">
-      <h2>Welcome to Riya AI</h2>
-      <p>Your ultra-intelligent AI companion, built for the future.</p>
-    </div>
+    <div class="footer">Built with ❤️ by Ajay Kumar AJ · 2026</div>
   </div>
-
-  <!-- RIGHT: Login Form -->
-  <div class="split-right">
-    <div class="login-card">
-      <div class="login-logo">✦</div>
-      <h1>Riya AI</h1>
-      <p class="subtitle">Sign in to access your intelligent dashboard,<br/>AI agents, and live insights.</p>
-
-      <button class="google-btn" id="loginBtn" onclick="login()">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="G"/>
-        Continue with Google
-      </button>
-
-      <div class="loading-msg" id="loginLoader">Authenticating... Please wait</div>
-
-      <div class="divider">Powered by AI</div>
-
-      <div class="features-row">
-        <div class="feature-chip">
-          <span class="emoji">🧠</span>
-          Deep Thinking
-        </div>
-        <div class="feature-chip">
-          <span class="emoji">📊</span>
-          Live Markets
-        </div>
-        <div class="feature-chip">
-          <span class="emoji">🚀</span>
-          AI Agents
-        </div>
-      </div>
-
-      <div class="login-footer">
-        Built with ❤️ by Ajay Kumar AJ · 2026
-      </div>
-    </div>
-  </div>
-
   <script>
-    function login() {
-      document.getElementById('loginBtn').disabled = true;
-      document.getElementById('loginBtn').style.opacity = '0.5';
-      document.getElementById('loginLoader').style.display = 'block';
-      if (typeof handleGoogleLogin === 'function') {
-        handleGoogleLogin();
-      }
+    function doLogin(){
+      document.getElementById('loginBtn').disabled=true;
+      document.getElementById('loginBtn').style.opacity='0.5';
+      document.getElementById('loader').style.display='block';
+      if(typeof handleGoogleLogin==='function') handleGoogleLogin();
     }
   </script>
 </body>
