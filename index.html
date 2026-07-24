@@ -2,61 +2,447 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Riya AI — Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Riya.AI — Login</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <link rel="stylesheet" href="css/global.css"/>
   <script src="js/auth.js" defer></script>
-  <style>
-    body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#06060f;color:#fff;font-family:'Inter',sans-serif;overflow:hidden;position:relative;}
-    /* Subtle background glow */
-    body::before{content:'';position:absolute;top:30%;left:50%;width:500px;height:500px;background:radial-gradient(circle,rgba(124,58,237,0.12),transparent 70%);transform:translate(-50%,-50%);pointer-events:none;}
 
-    .login-card{width:100%;max-width:400px;padding:48px 40px;background:rgba(255,255,255,0.03);border:1px solid rgba(139,92,246,0.18);border-radius:28px;backdrop-filter:blur(30px);box-shadow:0 24px 80px rgba(0,0,0,0.5),0 0 60px rgba(124,58,237,0.06);text-align:center;}
-    .login-logo{width:68px;height:68px;margin:0 auto 28px;background:linear-gradient(135deg,#7c3aed,#3b82f6);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 10px 30px rgba(124,58,237,0.4);}
-    .login-card h1{font-size:28px;font-weight:700;margin-bottom:6px;}
-    .login-card h1 span{color:#a78bfa;}
-    .login-card .sub{color:rgba(255,255,255,0.4);font-size:14px;margin-bottom:36px;line-height:1.5;}
-    .google-btn{width:100%;padding:16px;background:linear-gradient(135deg,rgba(124,58,237,0.2),rgba(59,130,246,0.2));border:1px solid rgba(139,92,246,0.35);border-radius:14px;color:white;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;transition:all .3s;font-family:inherit;}
-    .google-btn:hover{background:linear-gradient(135deg,rgba(124,58,237,0.35),rgba(59,130,246,0.35));border-color:rgba(139,92,246,0.6);transform:translateY(-2px);box-shadow:0 8px 24px rgba(124,58,237,0.3);}
-    .google-btn img{width:20px;height:20px;}
-    .divider{display:flex;align-items:center;gap:16px;margin:28px 0;color:rgba(255,255,255,0.2);font-size:12px;}
-    .divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.08);}
-    .features{display:flex;gap:12px;}
-    .feat{flex:1;text-align:center;padding:14px 8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:14px;font-size:11px;color:rgba(255,255,255,0.45);}
-    .feat .icon{display:block;font-size:22px;margin-bottom:6px;}
-    .footer{margin-top:28px;font-size:12px;color:rgba(255,255,255,0.25);}
-    .loader{display:none;margin-top:16px;color:#a78bfa;font-size:13px;animation:pulse 1.5s infinite;}
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background: #03030c;
+      color: #ffffff;
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── LEFT CONTAINER: 3D COSMIC CANVAS ORB ── */
+    .left-container {
+      flex: 1.1;
+      position: relative;
+      background: radial-gradient(circle at 40% 50%, #150a33 0%, #080415 60%, #03030c 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #orbCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Decorative overlay glow */
+    .left-glow {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(168, 85, 247, 0.25) 0%, rgba(59, 130, 246, 0.15) 50%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(60px);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── RIGHT CONTAINER: GLASSMORPHISM LOGIN FORM ── */
+    .right-container {
+      flex: 0.9;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      background: radial-gradient(circle at 50% 30%, #0c0824 0%, #04020a 100%);
+      border-left: 1px solid rgba(168, 85, 247, 0.15);
+      z-index: 2;
+    }
+
+    /* Star field overlay for right container */
+    .star-bg {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        radial-gradient(1.5px 1.5px at 50px 80px, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1.5px 1.5px at 150px 250px, rgba(255,255,255,0.5), transparent),
+        radial-gradient(2px 2px at 280px 120px, rgba(168,85,247,0.8), transparent),
+        radial-gradient(1.5px 1.5px at 350px 400px, rgba(59,130,246,0.6), transparent);
+      background-size: 400px 400px;
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 440px;
+      padding: 40px 36px;
+      background: rgba(18, 14, 40, 0.55);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      border-radius: 24px;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      box-shadow: 
+        0 20px 50px rgba(0, 0, 0, 0.6),
+        0 0 40px rgba(168, 85, 247, 0.1),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1);
+      z-index: 10;
+    }
+
+    .login-header {
+      margin-bottom: 28px;
+    }
+
+    .welcome-text {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.5);
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+
+    .login-title {
+      font-size: 26px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+    }
+
+    .google-btn {
+      width: 100%;
+      padding: 13px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      transition: all 0.25s ease;
+      margin-bottom: 24px;
+    }
+
+    .google-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(168, 85, 247, 0.4);
+      box-shadow: 0 4px 16px rgba(168, 85, 247, 0.15);
+    }
+
+    .google-icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+      color: rgba(255, 255, 255, 0.35);
+      font-size: 12px;
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .input-group {
+      margin-bottom: 18px;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.6);
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 13px 16px;
+      background: rgba(10, 8, 24, 0.6);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      border-radius: 12px;
+      color: #ffffff;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.25s ease;
+    }
+
+    .form-input:focus {
+      border-color: #a855f7;
+      box-shadow: 0 0 12px rgba(168, 85, 247, 0.35);
+      background: rgba(15, 12, 35, 0.8);
+    }
+
+    .eye-icon {
+      position: absolute;
+      right: 14px;
+      cursor: pointer;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 16px;
+      user-select: none;
+    }
+
+    .forgot-link {
+      display: block;
+      text-align: right;
+      font-size: 12px;
+      color: #38bdf8;
+      text-decoration: none;
+      margin-top: 6px;
+      margin-bottom: 24px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .forgot-link:hover {
+      color: #7dd3fc;
+      text-decoration: underline;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(90deg, #d946ef 0%, #3b82f6 100%);
+      border: none;
+      border-radius: 12px;
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 24px rgba(217, 70, 239, 0.45);
+      margin-bottom: 20px;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 32px rgba(217, 70, 239, 0.7);
+    }
+
+    .signup-row {
+      text-align: center;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .signup-link {
+      color: #38bdf8;
+      text-decoration: none;
+      font-weight: 600;
+      margin-left: 4px;
+    }
+
+    .signup-link:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 900px) {
+      body { flex-direction: column; }
+      .left-container { display: none; }
+      .right-container { flex: 1; padding: 20px; }
+    }
   </style>
 </head>
 <body>
-  <div class="login-card">
-    <div class="login-logo">✦</div>
-    <h1>Riya<span>.AI</span></h1>
-    <p class="sub">Your AI. Your Universe.<br/>Sign in to access your intelligent dashboard.</p>
-    <button class="google-btn" id="loginBtn" onclick="doLogin()">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="G"/>
-      Continue with Google
-    </button>
-    <div class="loader" id="loader">Authenticating… Please wait</div>
-    <div class="divider">Powered by AI</div>
-    <div class="features">
-      <div class="feat"><span class="icon">🧠</span>Deep Thinking</div>
-      <div class="feat"><span class="icon">📊</span>Live Markets</div>
-      <div class="feat"><span class="icon">🚀</span>AI Agents</div>
-    </div>
-    <div class="footer">Built with ❤️ by Ajay Kumar AJ · 2026</div>
+
+  <!-- LEFT: 3D Orb Visual Canvas -->
+  <div class="left-container">
+    <div class="left-glow"></div>
+    <canvas id="orbCanvas"></canvas>
   </div>
+
+  <!-- RIGHT: Modern Glassmorphism Login Form -->
+  <div class="right-container">
+    <div class="star-bg"></div>
+
+    <div class="login-box">
+      <div class="login-header">
+        <div class="welcome-text">Welcome Back</div>
+        <h1 class="login-title">Login to your Account</h1>
+      </div>
+
+      <button class="google-btn" id="googleLoginBtn" onclick="doGoogleLogin()">
+        <svg class="google-icon" viewBox="0 0 24 24">
+          <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.2 9 5 12 5z"/>
+          <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/>
+          <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 10.8 0 12.5s.7 2.8 1.9 5.2l3.7-2.9z"/>
+          <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.2-6.4-5.2L1.9 17C3.7 20.7 7.5 24 12 24z"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <div class="divider">Or login with email</div>
+
+      <form onsubmit="handleFormSubmit(event)">
+        <div class="input-group">
+          <label class="input-label">Email Address</label>
+          <div class="input-wrapper">
+            <input type="email" id="emailInput" class="form-input" placeholder="name@email.com" required />
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Password</label>
+          <div class="input-wrapper">
+            <input type="password" id="passInput" class="form-input" placeholder="••••••••••••" required />
+            <span class="eye-icon" onclick="togglePassVisibility()">👁</span>
+          </div>
+          <a href="#" class="forgot-link">Forgot Password?</a>
+        </div>
+
+        <button type="submit" class="login-btn">Log In</button>
+      </form>
+
+      <div class="signup-row">
+        Don't have an account? <a href="#" class="signup-link" onclick="doGoogleLogin()">Sign Up</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3D Sci-Fi Orb Canvas Animation Script -->
   <script>
-    function doLogin(){
-      document.getElementById('loginBtn').disabled=true;
-      document.getElementById('loginBtn').style.opacity='0.5';
-      document.getElementById('loader').style.display='block';
-      if(typeof handleGoogleLogin==='function') handleGoogleLogin();
+    const canvas = document.getElementById('orbCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    let angle = 0;
+    const particles = [];
+    for (let i = 0; i < 90; i++) {
+      particles.push({
+        theta: Math.random() * Math.PI * 2,
+        phi: Math.acos((Math.random() * 2) - 1),
+        radius: 120 + Math.random() * 60,
+        speed: 0.005 + Math.random() * 0.01,
+        size: 1 + Math.random() * 2.5,
+        color: Math.random() > 0.5 ? '#c084fc' : '#38bdf8'
+      });
+    }
+
+    function drawOrb() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      const radius = Math.min(cx, cy) * 0.45;
+
+      angle += 0.008;
+
+      // Outer ambient glowing aura
+      const grad = ctx.createRadialGradient(cx, cy, 20, cx, cy, radius * 1.5);
+      grad.addColorStop(0, 'rgba(168, 85, 247, 0.45)');
+      grad.addColorStop(0.4, 'rgba(59, 130, 246, 0.25)');
+      grad.addColorStop(0.8, 'rgba(139, 92, 246, 0.08)');
+      grad.addColorStop(1, 'transparent');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius * 1.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Glowing Inner Core
+      const coreGrad = ctx.createRadialGradient(cx - 20, cy - 20, 5, cx, cy, radius * 0.65);
+      coreGrad.addColorStop(0, '#ffffff');
+      coreGrad.addColorStop(0.2, '#f0abfc');
+      coreGrad.addColorStop(0.5, '#c084fc');
+      coreGrad.addColorStop(0.8, '#6366f1');
+      coreGrad.addColorStop(1, '#1e1b4b');
+
+      ctx.save();
+      ctx.shadowColor = '#c084fc';
+      ctx.shadowBlur = 40;
+      ctx.fillStyle = coreGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius * 0.55, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Concentric Sci-Fi Rings
+      const ringCount = 4;
+      for (let r = 0; r < ringCount; r++) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angle * (r % 2 === 0 ? 1 : -1) + (r * Math.PI / 4));
+        ctx.scale(1, 0.35 + (r * 0.1));
+
+        ctx.strokeStyle = r % 2 === 0 ? 'rgba(192, 132, 252, 0.6)' : 'rgba(56, 189, 248, 0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([15, 10, 5, 10]);
+
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * (0.75 + r * 0.18), 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Floating Particle Cloud on Sphere Surface
+      particles.forEach(p => {
+        p.theta += p.speed;
+        const x = cx + p.radius * Math.sin(p.phi) * Math.cos(p.theta + angle);
+        const y = cy + p.radius * Math.cos(p.phi);
+        const z = p.radius * Math.sin(p.phi) * Math.sin(p.theta + angle);
+
+        const scale = (z + p.radius) / (p.radius * 2);
+        const alpha = Math.max(0.2, scale);
+
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.arc(x, y, p.size * (0.8 + scale * 0.5), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      });
+
+      requestAnimationFrame(drawOrb);
+    }
+    drawOrb();
+
+    function togglePassVisibility() {
+      const pass = document.getElementById('passInput');
+      pass.type = pass.type === 'password' ? 'text' : 'password';
+    }
+
+    function doGoogleLogin() {
+      if (typeof handleGoogleLogin === 'function') {
+        handleGoogleLogin();
+      }
+    }
+
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      doGoogleLogin();
     }
   </script>
 </body>
