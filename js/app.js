@@ -1,100 +1,96 @@
-// ── UI STATE ──
-let darkMode = true;
+// ── APP LOGIC (Navigation & Dashboard Data) ──
+const BACKEND = "https://riya-backend-ujz7.onrender.com";
 
-// ── INIT SECURE APP PAGES ──
-// This listener fires when auth.js confirms the user is logged in
 document.addEventListener('authReady', () => {
-  // Populate Sidebar Avatars & Name
-  const sbAv = document.getElementById("sbAv");
-  const topAvatar = document.getElementById("topAvatar");
-  const sbName = document.getElementById("sbName");
-  const sbPlan = document.getElementById("sbPlan");
-  const planLabel = document.getElementById("planLabel"); // might be on chat page
-  const wHi = document.getElementById("wHi"); // might be on chat page
+  if (typeof userName !== 'undefined') {
+    const el = document.getElementById('userNameDisplay');
+    if (el) el.textContent = userName;
+    
+    const av = document.getElementById('userAvatar');
+    if (av) {
+      if (typeof userPhotoURL !== 'undefined' && userPhotoURL) {
+        av.innerHTML = `<img src="${userPhotoURL}" alt="User"/>`;
+      } else {
+        av.textContent = userName[0].toUpperCase();
+      }
+    }
 
-  const initials = (userName || "U")[0].toUpperCase();
-  const avatarHTML = userPhotoURL ? `<img src="${userPhotoURL}" alt="avatar"/>` : initials;
+    const cw = document.getElementById('chatWelcomeTitle');
+    if (cw) cw.textContent = `Hello ${userName}!`;
+  }
   
-  if (sbAv) sbAv.innerHTML = avatarHTML;
-  if (topAvatar) topAvatar.innerHTML = avatarHTML;
-  if (sbName) sbName.textContent = currentUser.displayName || "User";
-  if (wHi) wHi.textContent = `Hello ${userName}! 👋`;
-
-  if (userPlan === "paid") {
-    if (sbPlan) sbPlan.textContent = "PREMIUM PLAN ⚡";
-    if (planLabel) {
-      planLabel.textContent = "PREMIUM · Claude";
-      planLabel.style.color = "#10b981";
-    }
-  }
-
-  // Show the app content (fade in)
-  document.body.style.opacity = 1;
+  // Start fetching market data
+  loadMarketData();
 });
 
-// ── SIDEBAR LOGIC ──
-function toggleSidebar() {
-  const sb = document.getElementById("sidebar");
-  const ov = document.getElementById("overlay");
-  if (sb) {
-    sb.classList.toggle("open");
-    if (ov) {
-      ov.style.display = sb.classList.contains("open") ? "block" : "none";
-    }
+// SPA Navigation
+function switchView(viewName, element) {
+  // Update Sidebar active state
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  if (element) {
+    element.classList.add('active');
   }
-}
 
-function closeSidebar() {
-  const sb = document.getElementById("sidebar");
-  const ov = document.getElementById("overlay");
-  if (sb) sb.classList.remove("open");
-  if (ov) ov.style.display = "none";
-}
+  // Hide all sections
+  document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
 
-// ── THEME LOGIC ──
-function toggleTheme() {
-  darkMode = !darkMode;
-  const r = document.documentElement.style;
-  if (!darkMode) {
-    r.setProperty("--bg","#F8F9FC");
-    r.setProperty("--s1","#FFFFFF");
-    r.setProperty("--s2","#F3F4F6");
-    r.setProperty("--s3","#E5E7EB");
-    r.setProperty("--t1","#111827");
-    r.setProperty("--t2","#6B7280");
-    r.setProperty("--t3","#9CA3AF");
-    r.setProperty("--br","rgba(0,0,0,0.07)");
+  // Show target section
+  const target = document.getElementById(`view-${viewName}`);
+  if (target) {
+    target.classList.remove('hidden');
   } else {
-    r.setProperty("--bg","#07090f");
-    r.setProperty("--s1","#0d1117");
-    r.setProperty("--s2","#161b22");
-    r.setProperty("--s3","#21262d");
-    r.setProperty("--t1","#f0f6fc");
-    r.setProperty("--t2","#8b949e");
-    r.setProperty("--t3","#484f58");
-    r.setProperty("--br","rgba(255,255,255,0.07)");
+    document.getElementById('view-placeholder').classList.remove('hidden');
   }
 }
 
-// ── CLOCK LOGIC (For Right Panel) ──
-function startClock() {
-  const clk = document.getElementById("rpClock");
-  const dt = document.getElementById("rpDate");
-  if (!clk || !dt) return;
-
-  function update() {
-    const n = new Date();
-    const pad = x => String(x).padStart(2,"0");
-    clk.textContent = `${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
-    const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    dt.textContent = `${days[n.getDay()]}, ${n.getDate()} ${months[n.getMonth()]} ${n.getFullYear()}`;
+// Redirect quick searches to Chat view
+function quickSearch(query) {
+  const chatInput = document.getElementById('msgInput');
+  if (chatInput) {
+    chatInput.value = query;
+    // Switch to chat view
+    const chatNavBtn = document.querySelector('.nav-item:nth-child(2)');
+    switchView('chat', chatNavBtn);
+    // Send message automatically if sendMsg function exists
+    if (typeof sendMsg === 'function') {
+      sendMsg();
+    }
   }
-  update();
-  setInterval(update, 1000);
 }
 
-// Fire clock if it exists
-document.addEventListener('DOMContentLoaded', () => {
-  startClock();
-});
+// Fetch Market Data
+async function loadMarketData() {
+  try {
+    const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true");
+    const d = await r.json();
+    
+    if (d.bitcoin) {
+      document.getElementById("btcVal").textContent = "$" + d.bitcoin.usd.toLocaleString();
+      const c = d.bitcoin.usd_24h_change;
+      const pct = document.getElementById("btcPct");
+      pct.textContent = (c >= 0 ? "▲ +" : "▼ ") + Math.abs(c).toFixed(2) + "%";
+      pct.className = c >= 0 ? "change-up" : "change-dn";
+    }
+    
+    if (d.ethereum) {
+      document.getElementById("ethVal").textContent = "$" + d.ethereum.usd.toLocaleString();
+      const c = d.ethereum.usd_24h_change;
+      const pct = document.getElementById("ethPct");
+      pct.textContent = (c >= 0 ? "▲ +" : "▼ ") + Math.abs(c).toFixed(2) + "%";
+      pct.className = c >= 0 ? "change-up" : "change-dn";
+    }
+  } catch(e) {
+    console.error("Market data fetch error", e);
+  }
+
+  try {
+    const r = await fetch("https://open.er-api.com/v6/latest/USD");
+    const d = await r.json();
+    if (d.rates?.INR) {
+      document.getElementById("inrVal").textContent = "₹" + d.rates.INR.toFixed(2);
+    }
+  } catch(e) {}
+  
+  // Refresh every 60s
+  setTimeout(loadMarketData, 60000);
+}

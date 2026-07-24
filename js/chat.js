@@ -1,16 +1,12 @@
 // ── CHAT LOGIC ──
 let messages = [];
-let deepOn = false;
 
-document.addEventListener('authReady', () => {
-  // Check if there is a query param e.g., ?q=Gold
-  const params = new URLSearchParams(window.location.search);
-  const q = params.get('q');
-  if (q) {
-    document.getElementById("msgInput").value = `Give me analysis and outlook for ${q}. Should I buy, sell or hold?`;
+function handleEnter(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
     sendMsg();
   }
-});
+}
 
 async function sendMsg() {
   const input = document.getElementById("msgInput");
@@ -18,46 +14,31 @@ async function sendMsg() {
   if (!msg) return;
 
   input.value = "";
-  input.style.height = "auto";
-  document.getElementById("sugRow").style.display = "none";
-
+  
   addMessage(msg, "user");
 
-  let wctx = "";
-  if (deepOn) {
-    try {
-      const sr = await fetch(`${BACKEND}/api/search`, {
-        method: "POST", headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ query: msg })
-      });
-      const sd = await sr.json();
-      if (sd.results?.length) {
-        wctx = "\n\n[LIVE WEB DATA]\n" + sd.results.map(r => `${r.title}: ${r.content?.slice(0,200)}`).join("\n");
-      }
-    } catch(e) {}
-  }
-
   const hist = messages.map(m => ({ role: m.role === "ai" ? "assistant" : "user", content: m.text }));
-  showThinking(true);
-  document.getElementById("chatStatus").textContent = "Thinking...";
+  
+  const sendBtn = document.getElementById("sendBtn");
+  sendBtn.disabled = true;
+  sendBtn.style.opacity = "0.5";
 
   try {
-    const res = await fetch(`${BACKEND}/api/chat`, {
+    const res = await fetch(`https://riya-backend-ujz7.onrender.com/api/chat`, {
       method: "POST",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify({
         messages: hist,
-        userName: userName,
-        plan: userPlan,
+        userName: typeof userName !== 'undefined' ? userName : "there",
+        plan: typeof userPlan !== 'undefined' ? userPlan : "free",
         stream: true,
-        wctx: wctx,
+        wctx: "",
         city: "India"
       })
     });
 
     const ct = res.headers.get("content-type") || "";
     if (ct.includes("text/event-stream")) {
-      showThinking(false);
       const aiMsgEl = addMessage("", "ai");
       const reader = res.body.getReader();
       const dec = new TextDecoder();
@@ -79,21 +60,21 @@ async function sendMsg() {
       }
     } else {
       const data = await res.json();
-      showThinking(false);
       addMessage(data.reply || "Try again.", "ai");
     }
   } catch(e) {
-    showThinking(false);
     addMessage("Connection issue. Check your internet and try again.", "ai");
   }
 
-  document.getElementById("chatStatus").textContent = "Online · Ready";
+  sendBtn.disabled = false;
+  sendBtn.style.opacity = "1";
 }
 
 function addMessage(text, role) {
   messages.push({ role, text });
 
-  const welcome = document.getElementById("welcomeScreen");
+  // Hide welcome text inside chat
+  const welcome = document.querySelector("#msgArea > div[style*='text-align: center']");
   if (welcome) welcome.style.display = "none";
 
   const area = document.getElementById("msgArea");
@@ -103,10 +84,11 @@ function addMessage(text, role) {
   if (role === "ai") {
     div.innerHTML = `<div class="msg-av">✦</div><div class="msg-bub"></div>`;
   } else {
-    // secure way to render avatar
-    const initials = (userName || "U")[0].toUpperCase();
-    const avatarHTML = userPhotoURL ? `<img src="${userPhotoURL}" alt="avatar"/>` : initials;
-    div.innerHTML = `<div class="msg-av" style="background:var(--s3)">${avatarHTML}</div><div class="msg-bub"></div>`;
+    const initial = typeof userName !== 'undefined' ? (userName || "U")[0].toUpperCase() : "U";
+    const avatarHTML = (typeof userPhotoURL !== 'undefined' && userPhotoURL) 
+      ? `<img src="${userPhotoURL}" alt="User"/>` 
+      : initial;
+    div.innerHTML = `<div class="msg-av" style="background:var(--bg-panel);border:1px solid var(--border-color);">${avatarHTML}</div><div class="msg-bub"></div>`;
   }
 
   const bub = div.querySelector(".msg-bub");
@@ -116,55 +98,7 @@ function addMessage(text, role) {
   return bub;
 }
 
-function showThinking(show) {
-  document.getElementById("thinking").style.display = show ? "block" : "none";
-  document.getElementById("sendBtn").disabled = show;
-  scrollChat();
-}
-
 function scrollChat() {
   const area = document.getElementById("msgArea");
   area.scrollTop = area.scrollHeight;
 }
-
-function clearChat() {
-  messages = [];
-  const area = document.getElementById("msgArea");
-  area.innerHTML = `
-    <div class="welcome" id="welcomeScreen">
-      <div class="w-orb">✦</div>
-      <div>
-        <div class="w-hi">Hello ${userName}! 👋</div>
-        <div class="w-title">How can I help you today?</div>
-        <div class="w-sub">I'm Riya. Your AI companion. Ask me anything or explore the world with me.</div>
-      </div>
-    </div>
-  `;
-  document.getElementById("sugRow").style.display = "flex";
-}
-
-function quickSug(el) {
-  const t = el.textContent.replace(/^[^\s]+\s/, "").trim();
-  document.getElementById("msgInput").value = t;
-  sendMsg();
-}
-
-function toggleDeep() {
-  deepOn = !deepOn;
-  document.getElementById("deepTrack").classList.toggle("on", deepOn);
-  const lbl = document.getElementById("deepLabel");
-  lbl.textContent = deepOn ? "Deep Research (ON)" : "Deep Research";
-  lbl.style.color = deepOn ? "var(--acc)" : "var(--t3)";
-}
-
-// Input listeners
-document.getElementById("msgInput").addEventListener("input", function() {
-  this.style.height = "auto";
-  this.style.height = Math.min(this.scrollHeight, 80) + "px";
-});
-document.getElementById("msgInput").addEventListener("keydown", function(e) {
-  if (e.key === "Enter" && !e.shiftKey) { 
-    e.preventDefault(); 
-    sendMsg(); 
-  }
-});

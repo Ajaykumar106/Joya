@@ -1,38 +1,245 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>Riya AI — Login</title>
-<link rel="stylesheet" href="css/global.css"/>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="js/auth.js" defer></script>
-<style>
-/* Ensure body stays hidden until auth state is known to prevent flashing */
-body { opacity: 0; transition: opacity 0.3s ease; }
-</style>
-</head>
-<body onload="document.body.style.opacity = '1'">
-
-<!-- AUTH SCREEN -->
-<div id="authScreen">
-  <div class="auth-logo">✦</div>
-  <div class="auth-title">Riya<span>.AI</span></div>
-  <div class="auth-sub">Your AI. Your Universe.</div>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Riya AI — Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
   
-  <button id="googleBtn" onclick="handleGoogleLogin()">
-    <svg class="g-icon" viewBox="0 0 24 24">
-      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-    </svg>
-    Continue with Google
-  </button>
-  <div id="authErr"></div>
-</div>
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
+  <!-- Global Styles & App Logic -->
+  <link rel="stylesheet" href="css/global.css"/>
+  <script src="js/auth.js" defer></script>
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      overflow: hidden;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Split Screen Layout */
+    .split-left {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: linear-gradient(135deg, #090b14 0%, #110e20 100%);
+      overflow: hidden;
+    }
+
+    .split-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-panel);
+      position: relative;
+      z-index: 10;
+      box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+    }
+
+    /* Animated AI Orb on Left Side */
+    .ai-orb-container {
+      position: relative;
+      width: 400px;
+      height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ai-orb {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #7c3aed, #ec4899);
+      box-shadow: 0 0 100px #7c3aed, 0 0 200px #ec4899;
+      animation: pulse-orb 4s infinite alternate ease-in-out;
+      z-index: 2;
+    }
+    .ai-ring {
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      animation: spin-ring 10s linear infinite;
+    }
+    .ai-ring:nth-child(2) {
+      width: 400px;
+      height: 400px;
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+      animation: spin-ring 15s linear infinite reverse;
+    }
+
+    @keyframes pulse-orb {
+      0% { transform: scale(0.9); box-shadow: 0 0 80px #7c3aed; }
+      100% { transform: scale(1.1); box-shadow: 0 0 150px #ec4899; }
+    }
+    @keyframes spin-ring {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .left-text {
+      position: absolute;
+      bottom: 10%;
+      text-align: center;
+      z-index: 10;
+    }
+    .left-text h2 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      background: -webkit-linear-gradient(#fff, #a371f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .left-text p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+
+    /* Login Panel on Right Side */
+    .login-box {
+      width: 100%;
+      max-width: 400px;
+      padding: 40px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      backdrop-filter: blur(20px);
+      text-align: center;
+    }
+    .login-logo {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #a371f7, #58a6ff);
+      border-radius: 16px;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      color: white;
+      box-shadow: 0 10px 20px rgba(163, 113, 247, 0.3);
+    }
+    .login-box h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    .login-box p {
+      color: var(--text-muted);
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .google-btn {
+      width: 100%;
+      padding: 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      color: white;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+    .google-btn:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.2);
+      transform: translateY(-2px);
+    }
+    .google-btn img {
+      width: 20px;
+      height: 20px;
+    }
+
+    .loading-msg {
+      display: none;
+      margin-top: 20px;
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 500;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    @media (max-width: 900px) {
+      body { flex-direction: column; }
+      .split-left { display: none; }
+      .split-right { padding: 20px; justify-content: center; background: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop') center/cover no-repeat; }
+      .split-right::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,0.8);
+        backdrop-filter: blur(10px);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Left Side: Visuals -->
+  <div class="split-left">
+    <div class="ai-orb-container">
+      <div class="ai-ring"></div>
+      <div class="ai-ring"></div>
+      <div class="ai-orb"></div>
+    </div>
+    <div class="left-text">
+      <h2>Welcome to Riya AI</h2>
+      <p>Your ultra-intelligent AI companion.</p>
+    </div>
+  </div>
+
+  <!-- Right Side: Login -->
+  <div class="split-right">
+    <div class="login-box">
+      <div class="login-logo">✦</div>
+      <h1>Riya AI</h1>
+      <p>Log in to access your dashboard and intelligent agents.</p>
+
+      <button class="google-btn" id="loginBtn" onclick="login()">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google">
+        Continue with Google
+      </button>
+
+      <div class="loading-msg" id="loginLoader">Authenticating... Please wait</div>
+    </div>
+  </div>
+
+  <script>
+    function login() {
+      document.getElementById('loginBtn').disabled = true;
+      document.getElementById('loginBtn').style.opacity = '0.5';
+      document.getElementById('loginLoader').style.display = 'block';
+      if (typeof handleGoogleLogin === 'function') {
+        handleGoogleLogin();
+      }
+    }
+  </script>
 </body>
 </html>

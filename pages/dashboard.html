@@ -1,237 +1,155 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>Riya AI — Dashboard</title>
-<link rel="stylesheet" href="../css/global.css"/>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="../js/auth.js" defer></script>
-<script src="../js/app.js" defer></script>
-<style>
-/* Ensure body stays hidden until auth state is known */
-body { opacity: 0; transition: opacity 0.3s ease; }
-</style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Riya AI — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <!-- Global Styles -->
+  <link rel="stylesheet" href="../css/global.css"/>
+  
+  <!-- App Logic -->
+  <script src="../js/auth.js" defer></script>
+  <script src="../js/app.js" defer></script>
+  <script src="../js/chat.js" defer></script>
 </head>
 <body>
 
-<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
-
-<!-- APP -->
-<div id="app" class="show">
-
-  <!-- TOPBAR -->
-  <div class="topbar">
-    <button class="tb-menu" id="menuBtn" onclick="toggleSidebar()">
-      <span></span><span></span><span></span>
-    </button>
-    <a href="dashboard.html" class="tb-logo">Riya<span>.AI</span></a>
-    <div class="tb-search">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--t3)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input id="searchBar" placeholder="Search news, markets, agents..."/>
+  <!-- LEFT SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-icon">✦</div>
+      Riya.AI
     </div>
-    <div class="tb-right">
-      <div class="tb-btn" title="Theme" onclick="toggleTheme()">☀️</div>
-      <div class="tb-btn" title="Notifications">
-        🔔
-        <div class="notif-dot">2</div>
-      </div>
-      <div class="tb-avatar" id="topAvatar"></div>
+    
+    <div class="nav-links">
+      <a class="nav-item active" onclick="switchView('home', this)">
+        <span class="nav-icon">🏠</span> Home
+      </a>
+      <a class="nav-item" onclick="switchView('chat', this)">
+        <span class="nav-icon">💬</span> Ask Riya
+      </a>
+      <a class="nav-item" onclick="switchView('markets', this)">
+        <span class="nav-icon">📈</span> Markets
+      </a>
+      <a class="nav-item" onclick="switchView('science', this)">
+        <span class="nav-icon">🧬</span> Science
+      </a>
+      <a class="nav-item" onclick="switchView('agents', this)">
+        <span class="nav-icon">🤖</span> AI Agents
+      </a>
     </div>
-  </div>
+  </aside>
 
-  <div class="layout">
-
-    <!-- SIDEBAR -->
-    <div class="sidebar" id="sidebar">
-      <button class="sb-close" onclick="closeSidebar()">✖</button>
-      <div class="sb-user">
-        <div class="sb-av" id="sbAv"></div>
-        <div>
-          <div class="sb-name" id="sbName">Loading...</div>
-          <div class="sb-plan" id="sbPlan">FREE PLAN</div>
-        </div>
+  <!-- MAIN WRAPPER -->
+  <div class="main-wrapper">
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-search">
+        <span>🔍</span>
+        <input type="text" placeholder="Ask Riya anything..." onkeypress="if(event.key==='Enter') quickSearch(this.value)"/>
       </div>
-      <div class="sb-nav" id="sbNav">
-        <a href="dashboard.html" class="nav-item active">🏠 Home</a>
-        <a href="chat.html" class="nav-item">💬 Ask Riya</a>
-        <a href="#" class="nav-item">🌍 World Updates</a>
-        <a href="#" class="nav-item">📈 Markets</a>
-        <a href="#" class="nav-item">🚀 Space & Science</a>
-        <a href="#" class="nav-item">🇮🇳 India Updates</a>
-        <a href="#" class="nav-item">🤖 Tech & AI</a>
-        <a href="#" class="nav-item">💼 Business Hub <span class="nav-badge">Premium</span></a>
-        <a href="#" class="nav-item">🧠 AI Agents <span class="nav-badge">Premium</span></a>
-        <a href="#" class="nav-item">✅ Tasks & Reminders</a>
-        <a href="#" class="nav-item">🔖 Bookmarks</a>
-        <a href="#" class="nav-item">🕐 History</a>
+      <div class="user-profile">
+        <span id="userNameDisplay">Loading...</span>
+        <div class="user-avatar" id="userAvatar">U</div>
+        <button onclick="handleSignOut()" style="background:transparent; border:1px solid var(--border-color); color:var(--text-main); padding:6px 12px; border-radius:8px; cursor:pointer;">Logout</button>
       </div>
-      <div class="sb-bottom">
-        <div class="sb-premium">
-          <div class="sb-premium-title">💎 Riya Premium</div>
-          <div class="sb-premium-sub">Unlock unlimited power of Riya.</div>
-          <button class="sb-upgrade">Upgrade Now</button>
-        </div>
-        <div class="sb-online">
-          <div class="online-dot"></div>
-          <div>
-            <div style="font-size:11px;color:var(--t2);font-weight:500">Riya is online</div>
-            <div style="font-size:9px;color:var(--t3)">All systems operational</div>
-          </div>
-        </div>
-        <button class="sb-signout" onclick="handleSignOut()">↩ Sign Out</button>
-      </div>
-    </div>
+    </header>
 
-    <!-- CENTER -->
-    <div class="center">
-      <div class="center-scroll" id="centerScroll">
-
-        <!-- MARKET STRIP -->
-        <div class="mkt-strip" id="mktStrip">
-          <div class="mkt-card" onclick="window.location.href='chat.html?q=Gold'">
-            <div class="mc-label">🪙 GOLD (24K)</div>
-            <div class="mc-val" id="goldV">₹7,162<span class="mc-unit">/gm</span></div>
-            <div class="mc-chg up" id="goldC">▲ +0.38%</div>
+    <!-- CONTENT AREA (SPA VIEWS) -->
+    <main class="content-area">
+      
+      <!-- VIEW: HOME (Dashboard) -->
+      <div id="view-home" class="view-section">
+        <h2 style="margin-bottom: 24px; font-weight: 600;">Live Market Overview</h2>
+        
+        <div class="dash-grid">
+          <div class="glass-card">
+            <div class="card-title">Bitcoin (BTC)</div>
+            <div class="card-value" id="btcVal">$0.00</div>
+            <div id="btcPct" class="change-up">+0.00%</div>
           </div>
-          <div class="mkt-card" onclick="window.location.href='chat.html?q=Bitcoin'">
-            <div class="mc-label">₿ BITCOIN</div>
-            <div class="mc-val" id="btcV">$67,892</div>
-            <div class="mc-chg up" id="btcC">▲ +1.26%</div>
+          <div class="glass-card">
+            <div class="card-title">Ethereum (ETH)</div>
+            <div class="card-value" id="ethVal">$0.00</div>
+            <div id="ethPct" class="change-dn">-0.00%</div>
           </div>
-          <div class="mkt-card" onclick="window.location.href='chat.html?q=USD'">
-            <div class="mc-label">🇺🇸 USD / INR</div>
-            <div class="mc-val" id="inrV">₹83.42</div>
-            <div class="mc-chg dn" id="inrC">▼ −0.12%</div>
-          </div>
-          <div class="mkt-card" onclick="window.location.href='chat.html?q=Sensex'">
-            <div class="mc-label">🇮🇳 SENSEX</div>
-            <div class="mc-val" id="sensexV">72,402</div>
-            <div class="mc-chg up" id="sensexC">▲ +0.71%</div>
-          </div>
-          <div class="mkt-card" onclick="window.location.href='chat.html?q=Ethereum'">
-            <div class="mc-label">Ξ ETHEREUM</div>
-            <div class="mc-val" id="ethV">$3,180</div>
-            <div class="mc-chg up" id="ethC">▲ +1.2%</div>
+          <div class="glass-card">
+            <div class="card-title">USD / INR</div>
+            <div class="card-value" id="inrVal">₹0.00</div>
+            <div class="change-up">Live Rate</div>
           </div>
         </div>
 
-        <!-- NEWS -->
-        <div>
-          <div class="section-header">
-            <div class="section-title">🌍 Top World Updates</div>
-            <div class="section-link">View All</div>
-          </div>
-          <div class="news-row" id="newsRow">
-            <div class="news-card" onclick="window.location.href='chat.html?q=Explain%20Gold%20highs'">
-              <img class="nc-img" src="https://images.unsplash.com/photo-1610375461246-83df859d849d?w=300&q=70" alt="Gold"/>
-              <div class="nc-body">
-                <div class="nc-cat"><span class="breaking-badge">BREAKING</span></div>
-                <div class="nc-title">Gold hits record high as global uncertainty rises</div>
-                <div class="nc-foot"><span class="nc-src">Bloomberg · 10m</span><span class="nc-ask">Ask Riya →</span></div>
+        <div class="news-section">
+          <h3>Top World Updates</h3>
+          <div class="news-grid" id="newsGrid">
+            <!-- News injected here -->
+            <div class="news-card" onclick="quickSearch('Explain the latest AI advancements')">
+              <div class="news-img" style="background: url('https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=600&auto=format&fit=crop') center/cover;"></div>
+              <div class="news-content">
+                <div class="news-tag">Technology · AI</div>
+                <div class="news-title">OpenAI and Google announce major breakthroughs in reasoning models.</div>
               </div>
             </div>
-            <div class="news-card" onclick="window.location.href='chat.html?q=India%20Elections'">
-              <img class="nc-img" src="https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=300&q=70" alt="India"/>
-              <div class="nc-body">
-                <div class="nc-cat">INDIA · POLITICS</div>
-                <div class="nc-title">India Elections 2025: Phase 4 voting over 65%</div>
-                <div class="nc-foot"><span class="nc-src">TOI · 25m</span><span class="nc-ask">Ask Riya →</span></div>
+            <div class="news-card" onclick="quickSearch('What is the current state of global markets?')">
+              <div class="news-img" style="background: url('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=600&auto=format&fit=crop') center/cover;"></div>
+              <div class="news-content">
+                <div class="news-tag">Markets · Finance</div>
+                <div class="news-title">Global markets rally as tech stocks see unprecedented growth.</div>
               </div>
             </div>
-            <div class="news-card" onclick="window.location.href='chat.html?q=NASA%20exoplanet'">
-              <img class="nc-img" src="https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=300&q=70" alt="Space"/>
-              <div class="nc-body">
-                <div class="nc-cat">SPACE · NASA</div>
-                <div class="nc-title">NASA confirms water on exoplanet K2-18b</div>
-                <div class="nc-foot"><span class="nc-src">NASA · 1h</span><span class="nc-ask">Ask Riya →</span></div>
+            <div class="news-card" onclick="quickSearch('Latest James Webb Telescope discoveries')">
+              <div class="news-img" style="background: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=600&auto=format&fit=crop') center/cover;"></div>
+              <div class="news-content">
+                <div class="news-tag">Science · Space</div>
+                <div class="news-title">James Webb Telescope captures clearest images of exoplanet atmospheres.</div>
               </div>
             </div>
           </div>
         </div>
-
       </div>
-    </div>
 
-    <!-- RIGHT PANEL -->
-    <div class="right-panel">
-      <div class="rp-sec">
-        <div class="clock" id="rpClock">--:--:--</div>
-        <div class="clock-date" id="rpDate">Loading...</div>
-        <div class="clock-loc">📍 New Delhi, India</div>
-        <div class="weather-card">
-          <span style="font-size:26px">☀️</span>
-          <div>
-            <div class="wth-temp">38°C</div>
-            <div class="wth-desc">Sunny</div>
-            <div class="wth-sub">H:39° L:26° · <span style="color:var(--grn)">AQI 62 Good</span></div>
+      <!-- VIEW: CHAT -->
+      <div id="view-chat" class="view-section hidden" style="height: 100%;">
+        <div class="chat-container">
+          <div class="chat-history" id="msgArea">
+            <!-- Messages go here -->
+            <div style="text-align: center; margin: auto; color: var(--text-muted);">
+              <div style="font-size: 40px; margin-bottom: 16px; color: var(--accent);">✦</div>
+              <h2 id="chatWelcomeTitle" style="color: white; margin-bottom: 8px;">Hello!</h2>
+              <p>I'm Riya. Your highly intelligent AI companion.<br/>Ask me anything, explore deep philosophy, or write code.</p>
+            </div>
+          </div>
+          
+          <div class="chat-input-area">
+            <div class="chat-box">
+              <textarea id="msgInput" placeholder="Ask Riya anything... (Shift+Enter for newline)" onkeydown="handleEnter(event)"></textarea>
+              <button class="chat-btn" id="sendBtn" onclick="sendMsg()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+              </button>
+            </div>
+            <div style="text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 12px;">
+              Riya AI can make mistakes. Consider verifying important information.
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="rp-sec">
-        <div class="rp-title">MY AI AGENTS <span class="rp-see">View All</span></div>
-        <div class="agent-row">
-          <div class="ag-icon" style="background:rgba(59,130,246,.12)">📊</div>
-          <div style="flex:1"><div class="ag-name">Market Watcher</div><div class="ag-sub">Tracking 12 assets</div></div>
-          <div class="ag-dot"></div>
-        </div>
-        <div class="agent-row">
-          <div class="ag-icon" style="background:rgba(16,185,129,.12)">📰</div>
-          <div style="flex:1"><div class="ag-name">News Summarizer</div><div class="ag-sub">Daily at 8:00 AM</div></div>
-          <div class="ag-dot"></div>
-        </div>
+      <!-- VIEW: PLACEHOLDER FOR OTHERS -->
+      <div id="view-placeholder" class="view-section hidden">
+        <h2 style="margin-bottom: 16px;">Coming Soon</h2>
+        <p style="color: var(--text-muted);">This section is under development.</p>
       </div>
-    </div>
 
+    </main>
   </div>
 
-  <!-- TICKER -->
-  <div class="ticker">
-    <div class="ticker-live">
-      <div class="live-dot"></div>
-      <div class="live-txt">LIVE</div>
-    </div>
-    <div class="ticker-wrap">
-      <div class="ticker-inner">
-        Elon Musk hints at Tesla India entry in 2026 &nbsp;•&nbsp; Crude Oil prices fall below $80 &nbsp;•&nbsp; ISRO to launch 3 new satellites in June &nbsp;•&nbsp; RBI keeps repo rate unchanged &nbsp;•&nbsp; Sensex hits all-time high &nbsp;•&nbsp; India GDP growth at 7.2% for FY26
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<script>
-// Fetch market data directly in dashboard
-async function fetchMarkets() {
-  try {
-    const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true");
-    const d = await r.json();
-    if (d.bitcoin) {
-      document.getElementById("btcV").textContent = "$" + d.bitcoin.usd.toLocaleString();
-      const c = d.bitcoin.usd_24h_change;
-      document.getElementById("btcC").textContent = (c>=0?"▲ +":"▼ ") + Math.abs(c).toFixed(2) + "%";
-      document.getElementById("btcC").className = "mc-chg " + (c>=0?"up":"dn");
-    }
-    if (d.ethereum) {
-      document.getElementById("ethV").textContent = "$" + d.ethereum.usd.toLocaleString();
-      const c = d.ethereum.usd_24h_change;
-      document.getElementById("ethC").textContent = (c>=0?"▲ +":"▼ ") + Math.abs(c).toFixed(2) + "%";
-      document.getElementById("ethC").className = "mc-chg " + (c>=0?"up":"dn");
-    }
-  } catch(e) {}
-  try {
-    const r = await fetch("https://open.er-api.com/v6/latest/USD");
-    const d = await r.json();
-    if (d.rates?.INR) document.getElementById("inrV").textContent = "₹" + d.rates.INR.toFixed(2);
-  } catch(e) {}
-}
-document.addEventListener('authReady', () => {
-  fetchMarkets();
-  setInterval(fetchMarkets, 60000);
-});
-</script>
 </body>
 </html>
