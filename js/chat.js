@@ -84,20 +84,21 @@ async function submitMessage() {
 
   // Create AI Stream Container
   const aiBubbleEl = appendMessageUI('', 'assistant');
-  const cursorSpan = document.createElement('span');
-  cursorSpan.className = 'typing-cursor';
-  aiBubbleEl.appendChild(cursorSpan);
+  
+  if (stateFeatures.webSearch) {
+    aiBubbleEl.innerHTML = '<span style="color:var(--accent-blue); font-size:12px;">🌐 Searching live web & fetching context...</span><br/><span class="typing-cursor"></span>';
+  } else {
+    aiBubbleEl.innerHTML = '<span class="typing-cursor"></span>';
+  }
 
   let fullAiResponse = '';
 
   try {
-    // Format History for API
     const historyPayload = currentMessages.map(m => ({
       role: m.role === 'user' ? 'user' : 'assistant',
       content: m.content
     }));
 
-    // Add Agent System Context if Active
     if (activeAgentPrompt) {
       historyPayload.unshift({ role: 'system', content: activeAgentPrompt });
     }
@@ -188,12 +189,11 @@ function appendMessageUI(text, role) {
 
   contentBox.appendChild(bubble);
 
-  // Actions (Copy, etc.)
   if (role === 'assistant' && text) {
     const actions = document.createElement('div');
     actions.className = 'msg-actions';
     actions.innerHTML = `
-      <span class="msg-action-icon" onclick="copyText(this, \`${escapeJsString(text)}\`)">📋 Copy</span>
+      <span class="msg-action-icon" onclick="copyText(this, \`${escapeJsString(text)}\`)">📋 Copy Text</span>
     `;
     contentBox.appendChild(actions);
   }
@@ -227,31 +227,27 @@ function startNewChat() {
     <div class="welcome-screen" id="welcomeScreen">
       <div class="welcome-logo-badge">✦</div>
       <h1 class="welcome-heading">What would you like to explore?</h1>
-      <p class="welcome-subtext">Riya AI is ready for code engineering, live financial analysis, or deep scientific research.</p>
+      <p class="welcome-subtext">Riya AI is ready for code execution, live web search, financial analysis, or deep scientific research.</p>
 
       <div class="starter-prompts-grid">
-        <div class="starter-card" onclick="quickPrompt('Write a clean, production-ready REST API in Node.js TypeScript with express and error handling')">
-          <div class="starter-card-icon">💻</div>
-          <div class="starter-card-title">Software Engineering</div>
-          <div class="starter-card-desc">Write a production-ready REST API in TypeScript</div>
+        <div class="starter-card" onclick="quickPrompt('Write a JavaScript function to filter an array of objects and run it in the compiler')">
+          <div class="starter-card-title">💻 Code & Compile</div>
+          <div class="starter-card-desc">Write & test interactive code directly in browser</div>
         </div>
 
-        <div class="starter-card" onclick="quickPrompt('Analyze the current live Bitcoin & Ethereum market trend, key resistance levels, and macro sentiment')">
-          <div class="starter-card-icon">📊</div>
-          <div class="starter-card-title">Market Intelligence</div>
-          <div class="starter-card-desc">Analyze live BTC & ETH trends and key support levels</div>
+        <div class="starter-card" onclick="quickPrompt('Analyze current live Bitcoin & Ethereum market trend and support levels')">
+          <div class="starter-card-title">📊 Market Intelligence</div>
+          <div class="starter-card-desc">Analyze live crypto prices & macro indicators</div>
         </div>
 
-        <div class="starter-card" onclick="quickPrompt('Summarize the recent room-temperature superconductor claims and physics breakthroughs in 2026')">
-          <div class="starter-card-icon">🔬</div>
-          <div class="starter-card-title">Scientific Breakthroughs</div>
-          <div class="starter-card-desc">Summarize latest physics & superconductor breakthroughs</div>
+        <div class="starter-card" onclick="quickPrompt('Summarize the recent room-temperature superconductor claims in physics 2026')">
+          <div class="starter-card-title">🔬 Scientific Research</div>
+          <div class="starter-card-desc">Summarize latest physics & space breakthroughs</div>
         </div>
 
-        <div class="starter-card" onclick="quickPrompt('Draft a technical architecture specification for a scalable real-time WebSocket chat system')">
-          <div class="starter-card-icon">✍️</div>
-          <div class="starter-card-title">System Architecture</div>
-          <div class="starter-card-desc">Draft a tech spec for scalable microservices</div>
+        <div class="starter-card" onclick="quickPrompt('Perform a live web search for today\\'s top breaking AI news')">
+          <div class="starter-card-title">🌐 Live Web Search</div>
+          <div class="starter-card-desc">Search real-time news and internet data</div>
         </div>
       </div>
     </div>
@@ -307,7 +303,6 @@ function saveThreadState(threadId, messages) {
     });
   }
 
-  // Keep max 20 threads
   if (chatThreads.length > 20) chatThreads.pop();
 
   localStorage.setItem('riya_chat_threads', JSON.stringify(chatThreads));
@@ -350,22 +345,29 @@ function loadThread(threadId) {
   renderThreadHistory();
 }
 
-// Markdown Formatter (Production-grade parsing)
+// Markdown Formatter (With Run Code button)
 function formatMarkdown(text) {
   if (!text) return '';
   
   let html = escapeHtml(text);
 
-  // Fenced Code Blocks with copy header
+  // Fenced Code Blocks with Run & Copy buttons
   html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
-    const l = lang || 'code';
+    const l = (lang || 'code').toLowerCase();
+    const canRun = (l === 'js' || l === 'javascript' || l === 'html' || l === 'code' || l === 'py' || l === 'python');
+    
+    const runBtn = canRun ? `<button class="run-code-btn" onclick="runCodeInCompiler(this)">▶ Run Code</button>` : '';
+
     return `
       <div class="code-block-container">
         <div class="code-header">
           <span>${l}</span>
-          <button class="copy-code-btn" onclick="copyCodeBlock(this)">Copy</button>
+          <div class="code-header-right">
+            ${runBtn}
+            <button class="copy-code-btn" onclick="copyCodeBlock(this)">Copy</button>
+          </div>
         </div>
-        <pre><code>${code.trim()}</code></pre>
+        <pre><code class="language-${l}">${code.trim()}</code></pre>
       </div>
     `;
   });
@@ -383,6 +385,52 @@ function formatMarkdown(text) {
   return html;
 }
 
+// Interactive Code Execution in Console
+function runCodeInCompiler(btn) {
+  const code = btn.parentElement.parentElement.nextElementSibling.textContent;
+  const modal = document.getElementById('compilerModal');
+  const outputEl = document.getElementById('compilerOutput');
+
+  if (!modal || !outputEl) return;
+
+  modal.classList.remove('hidden');
+  outputEl.textContent = '⚡ Executing code in browser sandbox...\n\n';
+
+  let logs = [];
+  const customConsole = {
+    log: (...args) => logs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : a).join(' ')),
+    error: (...args) => logs.push('❌ Error: ' + args.join(' ')),
+    warn: (...args) => logs.push('⚠️ Warning: ' + args.join(' '))
+  };
+
+  try {
+    const runFn = new Function('console', code);
+    const result = runFn(customConsole);
+
+    let output = logs.join('\n');
+    if (result !== undefined) {
+      output += '\n\n➜ Returned: ' + (typeof result === 'object' ? JSON.stringify(result, null, 2) : result);
+    }
+    if (!output.trim()) {
+      output = '✓ Code executed successfully with no console output.';
+    }
+
+    outputEl.textContent = '⚡ Execution Output:\n\n' + output;
+  } catch (err) {
+    outputEl.textContent = '❌ Runtime Execution Error:\n\n' + err.stack;
+  }
+}
+
+function closeCompilerModal() {
+  const modal = document.getElementById('compilerModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function toggleApiInfoModal() {
+  const modal = document.getElementById('apiInfoModal');
+  if (modal) modal.classList.toggle('hidden');
+}
+
 function scrollChatToBottom() {
   const feed = document.getElementById('chatFeed');
   if (feed) feed.scrollTop = feed.scrollHeight;
@@ -397,7 +445,7 @@ function escapeJsString(str) {
 }
 
 function copyCodeBlock(btn) {
-  const code = btn.parentElement.nextElementSibling.textContent;
+  const code = btn.parentElement.parentElement.nextElementSibling.textContent;
   navigator.clipboard.writeText(code);
   btn.textContent = 'Copied!';
   setTimeout(() => btn.textContent = 'Copy', 2000);
@@ -406,5 +454,5 @@ function copyCodeBlock(btn) {
 function copyText(el, text) {
   navigator.clipboard.writeText(text);
   el.textContent = '✓ Copied';
-  setTimeout(() => el.textContent = '📋 Copy', 2000);
+  setTimeout(() => el.textContent = '📋 Copy Text', 2000);
 }

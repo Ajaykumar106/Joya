@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Riya.AI — Studio</title>
   
-  <!-- Fonts & Icons -->
   <link rel="stylesheet" href="../css/global.css"/>
   
   <!-- Firebase Core & Auth -->
@@ -13,7 +12,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
-  <!-- App Auth & Core Logic -->
+  <!-- App Logic -->
   <script src="../js/auth.js" defer></script>
   <script src="../js/chat.js" defer></script>
   <script src="../js/app.js" defer></script>
@@ -54,19 +53,23 @@
           <span class="nav-item-icon">🤖</span>
           <span>AI Agents</span>
         </a>
+        <a class="nav-item" id="nav-api-info" onclick="toggleApiInfoModal()">
+          <span class="nav-item-icon">ℹ️</span>
+          <span>API System Info</span>
+        </a>
       </nav>
 
       <div class="sidebar-section-title">Recent Threads</div>
 
       <div class="chat-history-list" id="threadHistoryList">
-        <!-- Thread items injected dynamically by JS -->
+        <!-- History injected dynamically -->
       </div>
 
       <div class="sidebar-footer">
-        <div class="user-profile-box" onclick="toggleSettingsModal()">
+        <div class="user-profile-box" onclick="toggleApiInfoModal()">
           <div class="user-avatar" id="sidebarUserAvatar">U</div>
           <div class="user-meta">
-            <span class="user-name-text" id="sidebarUserName">Loading...</span>
+            <span class="user-name-text" id="sidebarUserName">Developer</span>
             <span class="user-plan-text" id="sidebarUserPlan">PRO PLAN</span>
           </div>
         </div>
@@ -79,7 +82,7 @@
     <!-- ── MAIN WORKSPACE ── -->
     <main class="workspace-main">
       
-      <!-- Top Workspace Bar -->
+      <!-- Top Workspace Header -->
       <header class="workspace-header">
         <div class="header-left">
           <button class="model-selector-btn" id="modelSelector">
@@ -104,6 +107,9 @@
         </div>
 
         <div class="header-right">
+          <button class="action-btn" onclick="toggleApiInfoModal()">
+            <span>⚙️</span> APIs & Engine
+          </button>
           <button class="action-btn" onclick="clearCurrentChat()">
             <span>🗑️</span> Clear
           </button>
@@ -117,50 +123,46 @@
       <div class="chat-workspace" id="tab-content-chat">
         
         <div class="chat-feed-area" id="chatFeed">
-          <!-- Welcome Screen (Visible on New Chat) -->
+          <!-- Welcome Screen -->
           <div class="welcome-screen" id="welcomeScreen">
             <div class="welcome-logo-badge">✦</div>
             <h1 class="welcome-heading" id="welcomeHeading">What would you like to explore?</h1>
-            <p class="welcome-subtext">Riya AI is ready for code engineering, live financial analysis, or deep scientific research.</p>
+            <p class="welcome-subtext">Riya AI is ready for code execution, live web search, financial analysis, or deep scientific research.</p>
 
             <div class="starter-prompts-grid">
-              <div class="starter-card" onclick="quickPrompt('Write a clean, production-ready REST API in Node.js TypeScript with express and error handling')">
-                <div class="starter-card-icon">💻</div>
-                <div class="starter-card-title">Software Engineering</div>
-                <div class="starter-card-desc">Write a production-ready REST API in TypeScript</div>
+              <div class="starter-card" onclick="quickPrompt('Write a JavaScript function to filter an array of objects and run it in the compiler')">
+                <div class="starter-card-title">💻 Code & Compile</div>
+                <div class="starter-card-desc">Write & test interactive code directly in browser</div>
               </div>
 
-              <div class="starter-card" onclick="quickPrompt('Analyze the current live Bitcoin & Ethereum market trend, key resistance levels, and macro sentiment')">
-                <div class="starter-card-icon">📊</div>
-                <div class="starter-card-title">Market Intelligence</div>
-                <div class="starter-card-desc">Analyze live BTC & ETH trends and key support levels</div>
+              <div class="starter-card" onclick="quickPrompt('Analyze current live Bitcoin & Ethereum market trend and support levels')">
+                <div class="starter-card-title">📊 Market Intelligence</div>
+                <div class="starter-card-desc">Analyze live crypto prices & macro indicators</div>
               </div>
 
-              <div class="starter-card" onclick="quickPrompt('Summarize the recent room-temperature superconductor claims and physics breakthroughs in 2026')">
-                <div class="starter-card-icon">🔬</div>
-                <div class="starter-card-title">Scientific Breakthroughs</div>
-                <div class="starter-card-desc">Summarize latest physics & superconductor breakthroughs</div>
+              <div class="starter-card" onclick="quickPrompt('Summarize the recent room-temperature superconductor claims in physics 2026')">
+                <div class="starter-card-title">🔬 Scientific Research</div>
+                <div class="starter-card-desc">Summarize latest physics & space breakthroughs</div>
               </div>
 
-              <div class="starter-card" onclick="quickPrompt('Draft a technical architecture specification for a scalable real-time WebSocket chat system')">
-                <div class="starter-card-icon">✍️</div>
-                <div class="starter-card-title">System Architecture</div>
-                <div class="starter-card-desc">Draft a tech spec for scalable microservices</div>
+              <div class="starter-card" onclick="quickPrompt('Perform a live web search for today\\'s top breaking AI news')">
+                <div class="starter-card-title">🌐 Live Web Search</div>
+                <div class="starter-card-desc">Search real-time news and internet data</div>
               </div>
             </div>
           </div>
 
-          <!-- Chat messages dynamically rendered here -->
+          <!-- Chat messages rendered dynamically -->
         </div>
 
         <!-- Command Input Bar -->
         <div class="command-input-container">
-          <textarea id="chatInput" class="cmd-textarea" placeholder="Ask Riya anything or paste code... (Enter to send, Shift+Enter for new line)" rows="2" onkeydown="handleInputKeyDown(event)"></textarea>
+          <textarea id="chatInput" class="cmd-textarea" placeholder="Ask Riya anything or paste code... (Enter to send, Shift+Enter for newline)" rows="2" onkeydown="handleInputKeyDown(event)"></textarea>
           
           <div class="cmd-toolbar">
             <div class="cmd-tools-left">
-              <button class="cmd-tool-btn" title="Attach Context">📎 Attach</button>
-              <button class="cmd-tool-btn" id="toolbarWebSearch" onclick="toggleFeature('webSearch')">🌐 Web</button>
+              <button class="cmd-tool-btn" title="Attach File">📎 Attach</button>
+              <button class="cmd-tool-btn" id="toolbarWebSearch" onclick="toggleFeature('webSearch')">🌐 Web Search</button>
               <button class="cmd-tool-btn" id="toolbarDeepThink" onclick="toggleFeature('deepThink')">🧠 Deep Think</button>
             </div>
 
@@ -176,7 +178,7 @@
       <div class="panel-view-container hidden" id="tab-content-markets">
         <div class="view-header">
           <h2 class="view-title">Markets & Data Intelligence</h2>
-          <p class="view-subtitle">Real-time cryptocurrency rates, forex indices, and AI sentiment analysis.</p>
+          <p class="view-subtitle">Powered by CoinGecko API & Open Exchange Rates API.</p>
         </div>
 
         <div class="markets-grid">
@@ -187,7 +189,7 @@
             </div>
             <div class="market-price" id="mkt-btc-price">$67,420</div>
             <div class="market-change change-up" id="mkt-btc-change">▲ +2.45% (24h)</div>
-            <button class="analyze-ai-btn" onclick="quickPrompt('Provide a detailed technical and macro analysis for Bitcoin right now.')">
+            <button class="analyze-ai-btn" onclick="quickPrompt('Provide a technical analysis of Bitcoin price trend and support levels')">
               ✦ Analyze with Riya AI
             </button>
           </div>
@@ -199,7 +201,7 @@
             </div>
             <div class="market-price" id="mkt-eth-price">$3,520</div>
             <div class="market-change change-up" id="mkt-eth-change">▲ +1.80% (24h)</div>
-            <button class="analyze-ai-btn" onclick="quickPrompt('Provide a technical analysis of Ethereum gas fees, DeFi activity, and ETH price targets.')">
+            <button class="analyze-ai-btn" onclick="quickPrompt('Analyze Ethereum DeFi growth, gas fee trends, and ETH targets')">
               ✦ Analyze with Riya AI
             </button>
           </div>
@@ -211,35 +213,61 @@
             </div>
             <div class="market-price" id="mkt-inr-price">₹83.45</div>
             <div class="market-change change-up" id="mkt-inr-change">▲ Live Forex</div>
-            <button class="analyze-ai-btn" onclick="quickPrompt('What are the key drivers for USD/INR currency exchange rate today?')">
+            <button class="analyze-ai-btn" onclick="quickPrompt('What are the key macroeconomic drivers for USD/INR today?')">
               ✦ Analyze with Riya AI
             </button>
           </div>
         </div>
       </div>
 
-      <!-- 3. SCIENCE WORKSPACE -->
+      <!-- 3. SCIENCE WORKSPACE (WITH HIGH-RES IMAGES) -->
       <div class="panel-view-container hidden" id="tab-content-science">
         <div class="view-header">
           <h2 class="view-title">Science & Research Feed</h2>
-          <p class="view-subtitle">Curated developments across AI, quantum physics, and space exploration.</p>
+          <p class="view-subtitle">High-resolution scientific developments, astronomy, and AI advancements.</p>
         </div>
 
-        <div style="display:flex; flex-direction:column; gap:16px;">
-          <div class="market-card">
-            <h3 style="font-size:16px; margin-bottom:6px;">Quantum Supremacy & Fault-Tolerant Qubits</h3>
-            <p style="color:var(--text-secondary); font-size:13px; margin-bottom:12px;">Recent advances in logical qubit error correction allow 1,000+ stable quantum operations.</p>
-            <button class="analyze-ai-btn" onclick="quickPrompt('Explain the physics of fault-tolerant logical qubits and quantum error correction in simple terms.')">
-              ✦ Explain in Chat
-            </button>
+        <div class="science-card-grid">
+          <div class="science-news-card">
+            <img class="science-card-img" src="https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=800&auto=format&fit=crop" alt="Space"/>
+            <div class="science-card-content">
+              <div>
+                <div class="science-card-tag">ASTRONOMY & NASA</div>
+                <h3 class="science-card-h3">James Webb Telescope Discovers Atmospheric Water on Exoplanet K2-18b</h3>
+                <p class="science-card-desc">Spectroscopic analysis reveals water vapor and potential biosignature gases in the habitable zone.</p>
+              </div>
+              <button class="analyze-ai-btn" onclick="quickPrompt('Explain the James Webb Telescope discovery of water vapor on exoplanet K2-18b in detail.')">
+                ✦ Analyze in Chat
+              </button>
+            </div>
           </div>
 
-          <div class="market-card">
-            <h3 style="font-size:16px; margin-bottom:6px;">Autonomous AI Laboratories</h3>
-            <p style="color:var(--text-secondary); font-size:13px; margin-bottom:12px;">Robotic chemistry setups powered by LLMs discover 100+ new crystal structures per week.</p>
-            <button class="analyze-ai-btn" onclick="quickPrompt('How do AI-driven autonomous chemistry labs work, and what new materials have been found?')">
-              ✦ Explain in Chat
-            </button>
+          <div class="science-news-card">
+            <img class="science-card-img" src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=800&auto=format&fit=crop" alt="Quantum"/>
+            <div class="science-card-content">
+              <div>
+                <div class="science-card-tag">QUANTUM PHYSICS</div>
+                <h3 class="science-card-h3">Fault-Tolerant Logical Qubits Demonstrate 1,000+ Stable Quantum Operations</h3>
+                <p class="science-card-desc">Breakthrough in topological error correction brings practical quantum computing years closer.</p>
+              </div>
+              <button class="analyze-ai-btn" onclick="quickPrompt('Explain fault-tolerant logical qubits and topological quantum error correction.')">
+                ✦ Analyze in Chat
+              </button>
+            </div>
+          </div>
+
+          <div class="science-news-card">
+            <img class="science-card-img" src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop" alt="AI Materials"/>
+            <div class="science-card-content">
+              <div>
+                <div class="science-card-tag">AUTONOMOUS LABS</div>
+                <h3 class="science-card-h3">AI Chemistry Synthesizes 100+ Novel Crystal Structures in 7 Days</h3>
+                <p class="science-card-desc">Generative AI models paired with automated robotic synthesis discover new solid-state battery electrolytes.</p>
+              </div>
+              <button class="analyze-ai-btn" onclick="quickPrompt('How do AI models accelerate crystal structure synthesis for battery technology?')">
+                ✦ Analyze in Chat
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -248,7 +276,7 @@
       <div class="panel-view-container hidden" id="tab-content-agents">
         <div class="view-header">
           <h2 class="view-title">Specialized AI Agents</h2>
-          <p class="view-subtitle">Deploy specialized system personas tailored for specific engineering & research workflows.</p>
+          <p class="view-subtitle">Activate custom engineering personas for your workflows.</p>
         </div>
 
         <div class="agents-grid">
@@ -258,7 +286,7 @@
               <div class="agent-title">Software Architect</div>
               <div class="agent-desc">Specialized in clean architecture, refactoring, security audits, and full-stack code execution.</div>
             </div>
-            <button class="agent-launch-btn" onclick="activateAgent('Software Architect', 'You are Riya AI acting as a Principal Software Architect. Provide ultra-clean, production-ready code with typescript types and clean patterns.')">
+            <button class="agent-launch-btn" onclick="activateAgent('Software Architect', 'You are Riya AI acting as a Principal Software Architect. Provide ultra-clean, production-ready code with type annotations and clean patterns.')">
               Activate Agent
             </button>
           </div>
@@ -289,6 +317,40 @@
 
     </main>
 
+  </div>
+
+  <!-- ── IN-BROWSER CODE COMPILER MODAL ── -->
+  <div class="compiler-modal hidden" id="compilerModal">
+    <div class="compiler-box">
+      <div class="compiler-head">
+        <span>▶ Interactive Code Console</span>
+        <button class="compiler-close-btn" onclick="closeCompilerModal()">✕</button>
+      </div>
+      <div class="compiler-body" id="compilerOutput">
+        // Running code output...
+      </div>
+    </div>
+  </div>
+
+  <!-- ── API & ENGINE INFO MODAL ── -->
+  <div class="compiler-modal hidden" id="apiInfoModal">
+    <div class="compiler-box" style="height: auto; max-height: 80vh;">
+      <div class="compiler-head">
+        <span>ℹ️ Riya.AI Backend Engine & API Architecture</span>
+        <button class="compiler-close-btn" onclick="toggleApiInfoModal()">✕</button>
+      </div>
+      <div class="compiler-body" style="color:var(--text-primary); font-family:var(--font-sans); font-size:13px; line-height:1.7;">
+        <h3 style="color:var(--accent-purple); font-size:16px; margin-bottom:10px;">APIs Powering Riya.AI:</h3>
+        
+        <ul style="padding-left:20px; display:flex; flex-direction:column; gap:10px;">
+          <li><strong>1. Groq API & Gemini Flash Engine:</strong> Ultra-fast LLM inference hosted on our Render backend (<code style="color:var(--accent-blue)">https://riya-backend-ujz7.onrender.com</code>). Generates streaming tokens for chat responses.</li>
+          <li><strong>2. CoinGecko API:</strong> Live real-time cryptocurrency prices, 24-hour percentage shifts, and volume for BTC, ETH, SOL, etc.</li>
+          <li><strong>3. Open Exchange Rates API:</strong> Live forex currency conversion rates (USD/INR, EUR/USD, GBP/USD).</li>
+          <li><strong>4. Web Search Engine API:</strong> Real-time internet search for fetching up-to-the-minute breaking news and web data when 🌐 <em>Web Search</em> is enabled.</li>
+          <li><strong>5. Firebase Auth & Firestore API:</strong> Handles user registration, Google OAuth sign-in, and cloud document persistence.</li>
+        </ul>
+      </div>
+    </div>
   </div>
 
 </body>
