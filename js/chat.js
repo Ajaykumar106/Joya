@@ -1,104 +1,410 @@
-// ── CHAT LOGIC ──
-let messages = [];
+// ── RIYA.AI ENGINE & CHAT CONTROLLER ──
+const BACKEND_URL = "https://riya-backend-ujz7.onrender.com";
 
-function handleEnter(e) {
+// State Management
+let currentMessages = [];
+let chatThreads = JSON.parse(localStorage.getItem('riya_chat_threads') || '[]');
+let activeThreadId = null;
+let activeAgentPrompt = null;
+
+let stateFeatures = {
+  webSearch: true,
+  deepThink: false,
+  codeInterpreter: false
+};
+
+// Initialize Chat Controller on DOM Ready
+document.addEventListener('DOMContentLoaded', () => {
+  renderThreadHistory();
+});
+
+document.addEventListener('authReady', () => {
+  const name = typeof userName !== 'undefined' ? userName : 'Developer';
+  const heading = document.getElementById('welcomeHeading');
+  if (heading) {
+    heading.textContent = `What would you like to explore, ${name}?`;
+  }
+});
+
+// Feature Toggles
+function toggleFeature(featureKey) {
+  stateFeatures[featureKey] = !stateFeatures[featureKey];
+  
+  const pill = document.getElementById(`${featureKey}Toggle`);
+  const toolBtn = document.getElementById(`toolbar${featureKey.charAt(0).toUpperCase() + featureKey.slice(1)}`);
+  
+  [pill, toolBtn].forEach(el => {
+    if (el) {
+      if (stateFeatures[featureKey]) {
+        el.classList.add('active');
+      } else {
+        el.classList.remove('active');
+      }
+    }
+  });
+}
+
+// Handle Enter to Send Message
+function handleInputKeyDown(e) {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
-    sendMsg();
+    submitMessage();
   }
 }
 
-async function sendMsg() {
-  const input = document.getElementById("msgInput");
-  const msg = input.value.trim();
-  if (!msg) return;
+// Submit Message
+async function submitMessage() {
+  const inputEl = document.getElementById('chatInput');
+  const text = inputEl.value.trim();
+  if (!text) return;
 
-  input.value = "";
-  
-  addMessage(msg, "user");
+  // Clear Input
+  inputEl.value = '';
+  inputEl.style.height = 'auto';
 
-  const hist = messages.map(m => ({ role: m.role === "ai" ? "assistant" : "user", content: m.text }));
-  
-  const sendBtn = document.getElementById("sendBtn");
-  sendBtn.disabled = true;
-  sendBtn.style.opacity = "0.5";
+  // Hide Welcome Screen
+  const welcome = document.getElementById('welcomeScreen');
+  if (welcome) welcome.style.display = 'none';
+
+  // Make sure we are on Chat Tab
+  switchTab('chat');
+
+  // Create new thread if none active
+  if (!activeThreadId) {
+    activeThreadId = 'thread_' + Date.now();
+  }
+
+  // Add User Message
+  appendMessageUI(text, 'user');
+  currentMessages.push({ role: 'user', content: text });
+
+  // Disable Send Button
+  const sendBtn = document.getElementById('sendBtn');
+  if (sendBtn) sendBtn.disabled = true;
+
+  // Create AI Stream Container
+  const aiBubbleEl = appendMessageUI('', 'assistant');
+  const cursorSpan = document.createElement('span');
+  cursorSpan.className = 'typing-cursor';
+  aiBubbleEl.appendChild(cursorSpan);
+
+  let fullAiResponse = '';
 
   try {
-    const res = await fetch(`https://riya-backend-ujz7.onrender.com/api/chat`, {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
+    // Format History for API
+    const historyPayload = currentMessages.map(m => ({
+      role: m.role === 'user' ? 'user' : 'assistant',
+      content: m.content
+    }));
+
+    // Add Agent System Context if Active
+    if (activeAgentPrompt) {
+      historyPayload.unshift({ role: 'system', content: activeAgentPrompt });
+    }
+
+    const response = await fetch(`${BACKEND_URL}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        messages: hist,
-        userName: typeof userName !== 'undefined' ? userName : "there",
-        plan: typeof userPlan !== 'undefined' ? userPlan : "free",
+        messages: historyPayload,
+        userName: typeof userName !== 'undefined' ? userName : 'Developer',
+        plan: typeof userPlan !== 'undefined' ? userPlan : 'free',
         stream: true,
-        wctx: "",
-        city: "India"
+        webSearch: stateFeatures.webSearch,
+        deepThink: stateFeatures.deepThink
       })
     });
 
-    const ct = res.headers.get("content-type") || "";
-    if (ct.includes("text/event-stream")) {
-      const aiMsgEl = addMessage("", "ai");
-      const reader = res.body.getReader();
-      const dec = new TextDecoder();
+    const contentType = response.headers.get('content-type') || '';
+
+    if (contentType.includes('text/event-stream')) {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        for (const line of dec.decode(value).split("\n")) {
-          if (line.startsWith("data: ") && !line.includes("[DONE]")) {
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ') && !line.includes('[DONE]')) {
             try {
-              const d = JSON.parse(line.slice(6));
-              if (d.token) {
-                messages[messages.length-1].text += d.token;
-                aiMsgEl.textContent = messages[messages.length-1].text;
-                scrollChat();
+              const parsed = JSON.parse(line.slice(6));
+              if (parsed.token) {
+                fullAiResponse += parsed.token;
+                aiBubbleEl.innerHTML = formatMarkdown(fullAiResponse) + '<span class="typing-cursor"></span>';
+                scrollChatToBottom();
               }
-            } catch(e) {}
+            } catch (e) {}
           }
         }
       }
     } else {
-      const data = await res.json();
-      addMessage(data.reply || "Try again.", "ai");
+      const json = await response.json();
+      fullAiResponse = json.reply || json.response || "No response received.";
     }
-  } catch(e) {
-    addMessage("Connection issue. Check your internet and try again.", "ai");
+  } catch (error) {
+    console.error("Chat Error:", error);
+    fullAiResponse = "⚠️ Connection issue. Render backend warming up or offline. Please retry in a moment.";
   }
 
-  sendBtn.disabled = false;
-  sendBtn.style.opacity = "1";
+  // Finalize Response Output
+  aiBubbleEl.innerHTML = formatMarkdown(fullAiResponse);
+  currentMessages.push({ role: 'assistant', content: fullAiResponse });
+
+  // Save to Threads
+  saveThreadState(activeThreadId, currentMessages);
+
+  // Enable Send Button
+  if (sendBtn) sendBtn.disabled = false;
+  scrollChatToBottom();
 }
 
-function addMessage(text, role) {
-  messages.push({ role, text });
+// Append Message UI Element
+function appendMessageUI(text, role) {
+  const feed = document.getElementById('chatFeed');
+  
+  const msgRow = document.createElement('div');
+  msgRow.className = `chat-message-row ${role}`;
 
-  // Hide welcome text inside chat
-  const welcome = document.querySelector("#msgArea > div[style*='text-align: center']");
-  if (welcome) welcome.style.display = "none";
+  const avatar = document.createElement('div');
+  avatar.className = 'msg-avatar-box';
 
-  const area = document.getElementById("msgArea");
-  const div = document.createElement("div");
-  div.className = `msg ${role}`;
-
-  if (role === "ai") {
-    div.innerHTML = `<div class="msg-av">✦</div><div class="msg-bub"></div>`;
+  if (role === 'assistant') {
+    avatar.textContent = '✦';
   } else {
-    const initial = typeof userName !== 'undefined' ? (userName || "U")[0].toUpperCase() : "U";
-    const avatarHTML = (typeof userPhotoURL !== 'undefined' && userPhotoURL) 
-      ? `<img src="${userPhotoURL}" alt="User"/>` 
-      : initial;
-    div.innerHTML = `<div class="msg-av" style="background:var(--bg-panel);border:1px solid var(--border-color);">${avatarHTML}</div><div class="msg-bub"></div>`;
+    const initial = typeof userName !== 'undefined' ? userName[0].toUpperCase() : 'U';
+    avatar.textContent = initial;
   }
 
-  const bub = div.querySelector(".msg-bub");
-  bub.textContent = text;
-  area.appendChild(div);
-  scrollChat();
-  return bub;
+  const contentBox = document.createElement('div');
+  contentBox.className = 'msg-content-box';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble-content';
+  bubble.innerHTML = formatMarkdown(text);
+
+  contentBox.appendChild(bubble);
+
+  // Actions (Copy, etc.)
+  if (role === 'assistant' && text) {
+    const actions = document.createElement('div');
+    actions.className = 'msg-actions';
+    actions.innerHTML = `
+      <span class="msg-action-icon" onclick="copyText(this, \`${escapeJsString(text)}\`)">📋 Copy</span>
+    `;
+    contentBox.appendChild(actions);
+  }
+
+  msgRow.appendChild(avatar);
+  msgRow.appendChild(contentBox);
+
+  feed.appendChild(msgRow);
+  scrollChatToBottom();
+
+  return bubble;
 }
 
-function scrollChat() {
-  const area = document.getElementById("msgArea");
-  area.scrollTop = area.scrollHeight;
+// Quick Prompt Handler
+function quickPrompt(text) {
+  const inputEl = document.getElementById('chatInput');
+  if (inputEl) {
+    inputEl.value = text;
+    submitMessage();
+  }
+}
+
+// Start New Chat Thread
+function startNewChat() {
+  activeThreadId = null;
+  currentMessages = [];
+  activeAgentPrompt = null;
+
+  const feed = document.getElementById('chatFeed');
+  feed.innerHTML = `
+    <div class="welcome-screen" id="welcomeScreen">
+      <div class="welcome-logo-badge">✦</div>
+      <h1 class="welcome-heading">What would you like to explore?</h1>
+      <p class="welcome-subtext">Riya AI is ready for code engineering, live financial analysis, or deep scientific research.</p>
+
+      <div class="starter-prompts-grid">
+        <div class="starter-card" onclick="quickPrompt('Write a clean, production-ready REST API in Node.js TypeScript with express and error handling')">
+          <div class="starter-card-icon">💻</div>
+          <div class="starter-card-title">Software Engineering</div>
+          <div class="starter-card-desc">Write a production-ready REST API in TypeScript</div>
+        </div>
+
+        <div class="starter-card" onclick="quickPrompt('Analyze the current live Bitcoin & Ethereum market trend, key resistance levels, and macro sentiment')">
+          <div class="starter-card-icon">📊</div>
+          <div class="starter-card-title">Market Intelligence</div>
+          <div class="starter-card-desc">Analyze live BTC & ETH trends and key support levels</div>
+        </div>
+
+        <div class="starter-card" onclick="quickPrompt('Summarize the recent room-temperature superconductor claims and physics breakthroughs in 2026')">
+          <div class="starter-card-icon">🔬</div>
+          <div class="starter-card-title">Scientific Breakthroughs</div>
+          <div class="starter-card-desc">Summarize latest physics & superconductor breakthroughs</div>
+        </div>
+
+        <div class="starter-card" onclick="quickPrompt('Draft a technical architecture specification for a scalable real-time WebSocket chat system')">
+          <div class="starter-card-icon">✍️</div>
+          <div class="starter-card-title">System Architecture</div>
+          <div class="starter-card-desc">Draft a tech spec for scalable microservices</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  switchTab('chat');
+}
+
+// Clear Current Chat
+function clearCurrentChat() {
+  if (confirm("Clear current conversation?")) {
+    startNewChat();
+  }
+}
+
+// Export Chat Thread
+function exportChatThread() {
+  if (currentMessages.length === 0) return alert("No chat messages to export.");
+  
+  const text = currentMessages.map(m => `[${m.role.toUpperCase()}]:\n${m.content}\n`).join('\n---\n\n');
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Riya_Chat_${Date.now()}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Activate Agent
+function activateAgent(agentName, systemPrompt) {
+  startNewChat();
+  activeAgentPrompt = systemPrompt;
+  quickPrompt(`Hello! Act as the ${agentName}. Let's get started.`);
+}
+
+// Save Thread State to LocalStorage
+function saveThreadState(threadId, messages) {
+  if (!threadId || messages.length === 0) return;
+
+  const title = messages[0].content.slice(0, 30) + '...';
+  const existingIdx = chatThreads.findIndex(t => t.id === threadId);
+
+  if (existingIdx >= 0) {
+    chatThreads[existingIdx].messages = messages;
+    chatThreads[existingIdx].updatedAt = Date.now();
+  } else {
+    chatThreads.unshift({
+      id: threadId,
+      title: title,
+      messages: messages,
+      updatedAt: Date.now()
+    });
+  }
+
+  // Keep max 20 threads
+  if (chatThreads.length > 20) chatThreads.pop();
+
+  localStorage.setItem('riya_chat_threads', JSON.stringify(chatThreads));
+  renderThreadHistory();
+}
+
+// Render Thread History List in Sidebar
+function renderThreadHistory() {
+  const container = document.getElementById('threadHistoryList');
+  if (!container) return;
+
+  if (chatThreads.length === 0) {
+    container.innerHTML = `<div style="padding:12px; font-size:12px; color:var(--text-muted);">No saved conversations</div>`;
+    return;
+  }
+
+  container.innerHTML = chatThreads.map(t => `
+    <div class="history-item ${t.id === activeThreadId ? 'active' : ''}" onclick="loadThread('${t.id}')">
+      <span class="history-title">💬 ${escapeHtml(t.title)}</span>
+    </div>
+  `).join('');
+}
+
+// Load Saved Thread
+function loadThread(threadId) {
+  const thread = chatThreads.find(t => t.id === threadId);
+  if (!thread) return;
+
+  activeThreadId = thread.id;
+  currentMessages = thread.messages;
+
+  const feed = document.getElementById('chatFeed');
+  feed.innerHTML = '';
+
+  currentMessages.forEach(m => {
+    appendMessageUI(m.content, m.role);
+  });
+
+  switchTab('chat');
+  renderThreadHistory();
+}
+
+// Markdown Formatter (Production-grade parsing)
+function formatMarkdown(text) {
+  if (!text) return '';
+  
+  let html = escapeHtml(text);
+
+  // Fenced Code Blocks with copy header
+  html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+    const l = lang || 'code';
+    return `
+      <div class="code-block-container">
+        <div class="code-header">
+          <span>${l}</span>
+          <button class="copy-code-btn" onclick="copyCodeBlock(this)">Copy</button>
+        </div>
+        <pre><code>${code.trim()}</code></pre>
+      </div>
+    `;
+  });
+
+  // Inline Code
+  html = html.replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);">$1</code>');
+
+  // Bold & Italic
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+  // Newlines to Linebreaks
+  html = html.replace(/\n/g, '<br/>');
+
+  return html;
+}
+
+function scrollChatToBottom() {
+  const feed = document.getElementById('chatFeed');
+  if (feed) feed.scrollTop = feed.scrollHeight;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function escapeJsString(str) {
+  return str.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+}
+
+function copyCodeBlock(btn) {
+  const code = btn.parentElement.nextElementSibling.textContent;
+  navigator.clipboard.writeText(code);
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy', 2000);
+}
+
+function copyText(el, text) {
+  navigator.clipboard.writeText(text);
+  el.textContent = '✓ Copied';
+  setTimeout(() => el.textContent = '📋 Copy', 2000);
 }
