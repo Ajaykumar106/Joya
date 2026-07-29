@@ -134,7 +134,32 @@ async function submitMessage() {
   }
 
   // Finalize Response Output
-  aiBubbleEl.innerHTML = formatMarkdown(fullAiResponse);
+  // Detect if there's an HTML code block
+  const codeBlockRegex = /```html\n([\s\S]*?)```/;
+  const codeMatch = fullAiResponse.match(codeBlockRegex);
+  
+  if (codeMatch && codeMatch[1]) {
+    const rawCode = codeMatch[1];
+    // Replace the code block in the message with a button to open preview
+    const modifiedResponse = fullAiResponse.replace(codeBlockRegex, `
+<div style="margin: 16px 0; border: 1px solid var(--border-medium); border-radius: 8px; overflow: hidden;">
+  <div style="background: rgba(255,255,255,0.05); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+    <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+      HTML / UI Component
+    </div>
+    <button class="action-btn" onclick="openPreview(this.nextElementSibling.textContent)" style="padding: 6px 12px; font-size: 12px; background: #fff; color: #000; border: none;">
+      Open Preview
+    </button>
+  </div>
+  <textarea style="display:none;">${escapeHtml(rawCode)}</textarea>
+</div>
+    `);
+    aiBubbleEl.innerHTML = formatMarkdown(modifiedResponse);
+  } else {
+    aiBubbleEl.innerHTML = formatMarkdown(fullAiResponse);
+  }
+
   currentMessages.push({ role: 'assistant', content: fullAiResponse });
 
   // Save to LocalStorage Threads
@@ -412,6 +437,94 @@ function runCodeInCompiler(btn) {
     if (outputEl) outputEl.textContent = '❌ Execution Error:\n\n' + err.stack;
   }
 }
+
+/* ── SETTINGS & DATA CONTROLS ── */
+
+function toggleSettingsModal() {
+  const modal = document.getElementById('settingsModal');
+  if (modal) {
+    if (modal.classList.contains('hidden')) {
+      modal.classList.remove('hidden');
+      const nameEl = document.getElementById('settingsModalName');
+      if (nameEl) nameEl.textContent = typeof userName !== 'undefined' ? userName : 'Operator';
+    } else {
+      modal.classList.add('hidden');
+    }
+  }
+}
+
+function clearAllChats() {
+  if (confirm("Are you sure you want to delete ALL chats? This cannot be undone.")) {
+    chatThreads = [];
+    localStorage.removeItem('riya_chat_threads');
+    renderThreadHistory();
+    startNewChat();
+    toggleSettingsModal();
+  }
+}
+
+/* ── PREVIEW & ARTIFACTS LOGIC ── */
+
+let currentPreviewCode = "";
+
+window.openPreview = function(codeContent) {
+  currentPreviewCode = codeContent;
+  const previewCol = document.getElementById('previewColumn');
+  const chatCol = document.getElementById('chatColumn');
+  
+  if (previewCol && chatCol) {
+    previewCol.classList.remove('hidden');
+  }
+  
+  switchPreviewTab('preview');
+};
+
+window.closePreview = function() {
+  const previewCol = document.getElementById('previewColumn');
+  if (previewCol) {
+    previewCol.classList.add('hidden');
+  }
+  const iframe = document.getElementById('codeIframe');
+  if (iframe) iframe.srcdoc = "";
+};
+
+window.switchPreviewTab = function(tab) {
+  const iframe = document.getElementById('codeIframe');
+  const rawView = document.getElementById('rawCodeView');
+  const tabCode = document.getElementById('tabCode');
+  const tabPreview = document.getElementById('tabPreview');
+
+  if (tab === 'preview') {
+    iframe.classList.remove('hidden');
+    rawView.classList.add('hidden');
+    tabPreview.style.color = "#fff";
+    tabCode.style.color = "var(--text-secondary)";
+    
+    // Inject code into iframe
+    const htmlTemplate = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 20px; }
+        </style>
+      </head>
+      <body>
+        ${currentPreviewCode}
+      </body>
+      </html>
+    `;
+    iframe.srcdoc = htmlTemplate;
+  } else {
+    iframe.classList.add('hidden');
+    rawView.classList.remove('hidden');
+    tabCode.style.color = "#fff";
+    tabPreview.style.color = "var(--text-secondary)";
+    
+    rawView.textContent = currentPreviewCode;
+  }
+};
 
 function closeCompilerModal() {
   const modal = document.getElementById('compilerModal');
