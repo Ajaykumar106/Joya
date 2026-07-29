@@ -15,7 +15,7 @@ document.addEventListener('authReady', () => {
   const name = typeof userName !== 'undefined' ? userName : 'Operator';
   const heading = document.getElementById('welcomeHeading');
   if (heading) {
-    heading.textContent = `Sci-Fi Command Center Ready, ${name}`;
+    heading.textContent = `Good ${new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, ${name}`;
   }
 });
 
@@ -35,15 +35,7 @@ function handleInputKeyDown(e) {
   }
 }
 
-// Log message to Live HUD Terminal Drawer
-function logToHudTerminal(msg) {
-  const term = document.getElementById('terminalLogContent');
-  if (term) {
-    const time = new Date().toLocaleTimeString();
-    term.innerHTML += `<br/>[${time}] ${escapeHtml(msg)}`;
-    term.scrollTop = term.scrollHeight;
-  }
-}
+// Removed terminal log function
 
 // Submit Message (Real-Time Live Streaming with HUD Terminal Logging)
 async function submitMessage() {
@@ -69,7 +61,6 @@ async function submitMessage() {
   // 1. Append User Message
   appendUserMessageUI(text);
   currentMessages.push({ role: 'user', content: text });
-  logToHudTerminal(`USER COMMAND: "${text}"`);
 
   // Disable Send Button
   const sendBtn = document.getElementById('sendBtn');
@@ -77,7 +68,7 @@ async function submitMessage() {
 
   // 2. Append AI Response Bubble
   const aiBubbleEl = appendAiMessageUI('');
-  aiBubbleEl.innerHTML = '<span style="color:var(--accent-purple); font-size:13px; font-weight:600;">🦋 Streaming AI telemetry...</span><span class="typing-cursor">●</span>';
+  aiBubbleEl.innerHTML = '<span style="color:var(--text-secondary); font-size:14px; display:flex; align-items:center; gap:6px;"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></span>';
 
   let fullAiResponse = '';
 
@@ -145,8 +136,6 @@ async function submitMessage() {
   // Finalize Response Output
   aiBubbleEl.innerHTML = formatMarkdown(fullAiResponse);
   currentMessages.push({ role: 'assistant', content: fullAiResponse });
-
-  logToHudTerminal(`AI STREAM COMPLETED (${fullAiResponse.length} chars)`);
 
   // Save to LocalStorage Threads
   saveThreadState(activeThreadId, currentMessages);
@@ -223,30 +212,44 @@ function startNewChat() {
 
   const feed = document.getElementById('chatFeed');
   feed.innerHTML = `
-    <div class="welcome-screen" id="welcomeScreen" style="margin:auto; text-align:center; max-width:680px;">
-      <div style="width:68px; height:68px; border-radius:20px; background:#fff; color:#000; display:flex; align-items:center; justify-content:center; font-size:38px; margin:0 auto 24px; font-weight:800; box-shadow:0 0 30px rgba(255,255,255,0.4);">🦋</div>
-      <h1 style="font-size:32px; font-weight:800; color:#fff; margin-bottom:10px; letter-spacing:-0.5px;">Sci-Fi Command Center Ready</h1>
-      <p style="font-size:14px; color:var(--text-secondary); margin-bottom:36px;">Execute live code matrix, internet telemetry search, or market analysis.</p>
+    <div class="welcome-screen" id="welcomeScreen" style="margin:auto; text-align:center; max-width:680px; padding-top:40px;">
+      <div style="width:56px; height:56px; border-radius:16px; background:#ffffff; color:#000000; display:flex; align-items:center; justify-content:center; margin:0 auto 24px; box-shadow:0 0 30px rgba(255,255,255,0.15);">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5C9.5 2.5 7.5 4.5 7.5 7v2H12l5.5-5.5a3.5 3.5 0 0 0-5.5-1z"/><path d="M12 2.5C14.5 2.5 16.5 4.5 16.5 7v2H12L6.5 3.5a3.5 3.5 0 0 1 5.5-1z"/><path d="M7.5 9A4.5 4.5 0 0 0 3 13.5c0 2.5 2 4.5 4.5 4.5H12V9H7.5z"/><path d="M16.5 9A4.5 4.5 0 0 1 21 13.5c0 2.5-2 4.5-4.5 4.5H12V9h4.5z"/><path d="M12 21.5v-3.5"/></svg>
+      </div>
+      <h1 id="welcomeHeading" style="font-size:28px; font-weight:700; color:#fff; margin-bottom:8px; letter-spacing:-0.5px;">How can I help you today?</h1>
+      <p style="font-size:14px; color:var(--text-secondary); margin-bottom:40px;">I can write code, analyze markets, or search the web for you.</p>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; text-align:left;">
-        <div class="market-card" style="cursor:pointer;" onclick="quickPrompt('Write a JavaScript function to filter an array of objects and run it in the compiler')">
-          <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">💻 Code Matrix</div>
-          <div style="font-size:12px; color:var(--text-secondary);">Execute live JavaScript & Python in terminal drawer</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; text-align:left;">
+        <div class="market-card" style="cursor:pointer; padding:16px;" onclick="quickPrompt('Write a clean, production-ready React component')">
+          <div style="display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; color:#fff; margin-bottom:4px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+            Write code
+          </div>
+          <div style="font-size:13px; color:var(--text-muted);">Generate clean and optimized functions</div>
         </div>
 
-        <div class="market-card" style="cursor:pointer;" onclick="quickPrompt('Analyze current live Bitcoin & Ethereum market trend and support levels')">
-          <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">📊 Market Telemetry</div>
-          <div style="font-size:12px; color:var(--text-secondary);">Fetch live CoinGecko crypto tickers & forex data</div>
+        <div class="market-card" style="cursor:pointer; padding:16px;" onclick="quickPrompt('Analyze the current crypto market trends')">
+          <div style="display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; color:#fff; margin-bottom:4px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            Analyze data
+          </div>
+          <div style="font-size:13px; color:var(--text-muted);">Get live market prices and analysis</div>
         </div>
 
-        <div class="market-card" style="cursor:pointer;" onclick="quickPrompt('Summarize the recent room-temperature superconductor claims in physics 2026')">
-          <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">🔬 Science Discoveries</div>
-          <div style="font-size:12px; color:var(--text-secondary);">Explore exoplanets, NASA JWST, and quantum physics</div>
+        <div class="market-card" style="cursor:pointer; padding:16px;" onclick="quickPrompt('Help me brainstorm ideas for a new project')">
+          <div style="display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; color:#fff; margin-bottom:4px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M4.93 4.93l2.83 2.83"></path><path d="M16.24 16.24l2.83 2.83"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><path d="M4.93 19.07l2.83-2.83"></path><path d="M16.24 7.76l2.83-2.83"></path></svg>
+            Brainstorm
+          </div>
+          <div style="font-size:13px; color:var(--text-muted);">Generate creative ideas and structures</div>
         </div>
 
-        <div class="market-card" style="cursor:pointer;" onclick="quickPrompt('Perform a live web search for today\\'s top breaking AI news')">
-          <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">🌐 Web Intelligence</div>
-          <div style="font-size:12px; color:var(--text-secondary);">Stream real-time web search results</div>
+        <div class="market-card" style="cursor:pointer; padding:16px;" onclick="quickPrompt('Search the web for the latest technology news')">
+          <div style="display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; color:#fff; margin-bottom:4px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            Search web
+          </div>
+          <div style="font-size:13px; color:var(--text-muted);">Get real-time answers from the internet</div>
         </div>
       </div>
     </div>
@@ -383,7 +386,7 @@ function runCodeInCompiler(btn) {
 
   if (modal && outputEl) modal.classList.remove('hidden');
 
-  logToHudTerminal('EXECUTING CODE MATRIX...');
+  // Removed terminal log call
 
   let logs = [];
   const customConsole = {
@@ -405,10 +408,8 @@ function runCodeInCompiler(btn) {
     }
 
     if (outputEl) outputEl.textContent = '⚡ Execution Output:\n\n' + output;
-    logToHudTerminal(`EXECUTION RESULT: ${output.slice(0, 100)}...`);
   } catch (err) {
     if (outputEl) outputEl.textContent = '❌ Execution Error:\n\n' + err.stack;
-    logToHudTerminal(`EXECUTION ERROR: ${err.message}`);
   }
 }
 
