@@ -174,7 +174,7 @@ function appendMessageUI(text, role) {
   avatar.className = 'msg-avatar-box';
 
   if (role === 'assistant') {
-    avatar.textContent = '✦';
+    avatar.textContent = '🪐';
   } else {
     const initial = typeof userName !== 'undefined' ? userName[0].toUpperCase() : 'U';
     avatar.textContent = initial;
@@ -225,7 +225,7 @@ function startNewChat() {
   const feed = document.getElementById('chatFeed');
   feed.innerHTML = `
     <div class="welcome-screen" id="welcomeScreen">
-      <div class="welcome-logo-badge">✦</div>
+      <div class="welcome-logo-badge">★</div>
       <h1 class="welcome-heading">What would you like to explore?</h1>
       <p class="welcome-subtext">Riya AI is ready for code execution, live web search, financial analysis, or deep scientific research.</p>
 
