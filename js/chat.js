@@ -289,15 +289,28 @@ function renderThreadHistory() {
   if (!container) return;
 
   if (chatThreads.length === 0) {
-    container.innerHTML = `<div style="padding:12px; font-size:12px; color:var(--text-muted);">No saved threads</div>`;
+    container.innerHTML = `<div style="padding:12px; font-size:12px; color:var(--text-muted);">No saved streams</div>`;
     return;
   }
 
   container.innerHTML = chatThreads.map(t => `
-    <div class="history-item ${t.id === activeThreadId ? 'active' : ''}" onclick="loadThread('${t.id}')">
-      <span class="history-title">💬 ${escapeHtml(t.title)}</span>
+    <div class="history-item ${t.id === activeThreadId ? 'active' : ''}" style="justify-content:space-between; cursor:default;">
+      <span class="history-title" style="flex:1; cursor:pointer;" onclick="loadThread('${t.id}')">💬 ${escapeHtml(t.title)}</span>
+      <button class="delete-thread-btn" onclick="deleteThread('${t.id}')" title="Delete Stream" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:12px; padding:2px 4px; border-radius:4px;">✕</button>
     </div>
   `).join('');
+}
+
+// Delete Thread
+function deleteThread(threadId) {
+  if (!confirm("Are you sure you want to permanently delete this stream?")) return;
+  chatThreads = chatThreads.filter(t => t.id !== threadId);
+  localStorage.setItem('riya_chat_threads', JSON.stringify(chatThreads));
+  if (activeThreadId === threadId) {
+    startNewChat();
+  } else {
+    renderThreadHistory();
+  }
 }
 
 // Load Saved Thread when Clicked
