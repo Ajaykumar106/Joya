@@ -196,7 +196,7 @@ function appendAiMessageUI(text) {
 
   const avatar = document.createElement('div');
   avatar.className = 'ai-avatar-circle';
-  avatar.textContent = '🪐';
+  avatar.textContent = '🦋';
 
   const container = document.createElement('div');
   container.className = 'ai-response-container';
