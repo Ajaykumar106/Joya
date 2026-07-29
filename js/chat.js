@@ -1,4 +1,4 @@
-// ── RIYA.AI ENGINE & CHAT CONTROLLER ──
+// ── RIYA.AI CONCEPT 2 SCI-FI COMMAND CENTER CHAT & TERMINAL ENGINE ──
 const BACKEND_URL = "https://riya-backend-ujz7.onrender.com";
 
 // State
@@ -6,22 +6,16 @@ let currentMessages = [];
 let chatThreads = JSON.parse(localStorage.getItem('riya_chat_threads') || '[]');
 let activeThreadId = null;
 
-let stateFeatures = {
-  webSearch: true,
-  deepThink: true,
-  codeInterpreter: true
-};
-
 // Initialize on DOM Ready
 document.addEventListener('DOMContentLoaded', () => {
   renderThreadHistory();
 });
 
 document.addEventListener('authReady', () => {
-  const name = typeof userName !== 'undefined' ? userName : 'Developer';
+  const name = typeof userName !== 'undefined' ? userName : 'Operator';
   const heading = document.getElementById('welcomeHeading');
   if (heading) {
-    heading.textContent = `What would you like to explore, ${name}?`;
+    heading.textContent = `Sci-Fi Command Center Ready, ${name}`;
   }
 });
 
@@ -33,19 +27,6 @@ function toggleSidebar() {
   }
 }
 
-// Toggle Feature Pills
-function toggleFeature(featureKey) {
-  stateFeatures[featureKey] = !stateFeatures[featureKey];
-  const pill = document.getElementById(`${featureKey}Toggle`);
-  if (pill) {
-    if (stateFeatures[featureKey]) {
-      pill.classList.add('active');
-    } else {
-      pill.classList.remove('active');
-    }
-  }
-}
-
 // Handle Enter to Send Message
 function handleInputKeyDown(e) {
   if (e.key === 'Enter' && !e.shiftKey) {
@@ -54,7 +35,17 @@ function handleInputKeyDown(e) {
   }
 }
 
-// Submit Message (Real-Time Live Streaming - DEFAULT ENGLISH ENFORCED)
+// Log message to Live HUD Terminal Drawer
+function logToHudTerminal(msg) {
+  const term = document.getElementById('terminalLogContent');
+  if (term) {
+    const time = new Date().toLocaleTimeString();
+    term.innerHTML += `<br/>[${time}] ${escapeHtml(msg)}`;
+    term.scrollTop = term.scrollHeight;
+  }
+}
+
+// Submit Message (Real-Time Live Streaming with HUD Terminal Logging)
 async function submitMessage() {
   const inputEl = document.getElementById('chatInput');
   const text = inputEl.value.trim();
@@ -68,17 +59,17 @@ async function submitMessage() {
   const welcome = document.getElementById('welcomeScreen');
   if (welcome) welcome.style.display = 'none';
 
-  // Ensure Chat View active
+  // Switch to Chat Tab
   switchTab('chat');
 
-  // Create new thread if none active
   if (!activeThreadId) {
     activeThreadId = 'thread_' + Date.now();
   }
 
-  // 1. Append User Message Bubble
+  // 1. Append User Message
   appendUserMessageUI(text);
   currentMessages.push({ role: 'user', content: text });
+  logToHudTerminal(`USER COMMAND: "${text}"`);
 
   // Disable Send Button
   const sendBtn = document.getElementById('sendBtn');
@@ -86,15 +77,14 @@ async function submitMessage() {
 
   // 2. Append AI Response Bubble
   const aiBubbleEl = appendAiMessageUI('');
-  aiBubbleEl.innerHTML = '<span style="color:var(--accent-purple); font-size:13px; font-weight:600;">🪐 Riya is thinking...</span><span class="typing-cursor">●</span>';
+  aiBubbleEl.innerHTML = '<span style="color:var(--accent-purple); font-size:13px; font-weight:600;">🦋 Streaming AI telemetry...</span><span class="typing-cursor">●</span>';
 
   let fullAiResponse = '';
 
   try {
-    // Force English System Instruction by Default
     const systemInstruction = {
       role: 'system',
-      content: 'You are Riya AI, an ultra-intelligent AI companion created by Ajay Kumar AJ. ALWAYS respond in fluent, natural English by default unless the user explicitly requests a different language in their prompt.'
+      content: 'You are Riya AI, an advanced AI companion created by Ajay. ALWAYS respond in fluent, natural English by default unless the user explicitly requests another language.'
     };
 
     const historyPayload = [
@@ -110,10 +100,10 @@ async function submitMessage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         messages: historyPayload,
-        userName: typeof userName !== 'undefined' ? userName : 'Developer',
+        userName: typeof userName !== 'undefined' ? userName : 'Operator',
         plan: typeof userPlan !== 'undefined' ? userPlan : 'free',
         stream: true,
-        language: 'English' // Explicitly enforce English
+        language: 'English'
       })
     });
 
@@ -155,6 +145,8 @@ async function submitMessage() {
   // Finalize Response Output
   aiBubbleEl.innerHTML = formatMarkdown(fullAiResponse);
   currentMessages.push({ role: 'assistant', content: fullAiResponse });
+
+  logToHudTerminal(`AI STREAM COMPLETED (${fullAiResponse.length} chars)`);
 
   // Save to LocalStorage Threads
   saveThreadState(activeThreadId, currentMessages);
@@ -231,30 +223,30 @@ function startNewChat() {
 
   const feed = document.getElementById('chatFeed');
   feed.innerHTML = `
-    <div class="welcome-screen" id="welcomeScreen">
-      <div class="welcome-logo-badge">🪐</div>
-      <h1 class="welcome-heading">What would you like to explore?</h1>
-      <p class="welcome-subtext">Riya AI is ready for live code execution, web search, financial analysis, or deep scientific research.</p>
+    <div class="welcome-screen" id="welcomeScreen" style="margin:auto; text-align:center; max-width:680px;">
+      <div style="width:68px; height:68px; border-radius:20px; background:#fff; color:#000; display:flex; align-items:center; justify-content:center; font-size:38px; margin:0 auto 24px; font-weight:800; box-shadow:0 0 30px rgba(255,255,255,0.4);">🦋</div>
+      <h1 style="font-size:32px; font-weight:800; color:#fff; margin-bottom:10px; letter-spacing:-0.5px;">Sci-Fi Command Center Ready</h1>
+      <p style="font-size:14px; color:var(--text-secondary); margin-bottom:36px;">Execute live code matrix, internet telemetry search, or market analysis.</p>
 
-      <div class="starter-prompts-grid">
-        <div class="starter-card" onclick="quickPrompt('Write a JavaScript function to filter an array of objects and run it in the compiler')">
-          <div class="starter-card-title">💻 Code & Compile</div>
-          <div class="starter-card-desc">Write & test interactive code directly in browser</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; text-align:left;">
+        <div class="market-card" style="cursor:pointer;" onclick="quickPrompt('Write a JavaScript function to filter an array of objects and run it in the compiler')">
+          <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">💻 Code Matrix</div>
+          <div style="font-size:12px; color:var(--text-secondary);">Execute live JavaScript & Python in terminal drawer</div>
         </div>
 
-        <div class="starter-card" onclick="quickPrompt('Analyze current live Bitcoin & Ethereum market trend and support levels')">
-          <div class="starter-card-title">📊 Market Intelligence</div>
-          <div class="starter-card-desc">Analyze live crypto prices & macro indicators</div>
+        <div class="market-card" style="cursor:pointer;" onclick="quickPrompt('Analyze current live Bitcoin & Ethereum market trend and support levels')">
+          <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">📊 Market Telemetry</div>
+          <div style="font-size:12px; color:var(--text-secondary);">Fetch live CoinGecko crypto tickers & forex data</div>
         </div>
 
-        <div class="starter-card" onclick="quickPrompt('Summarize the recent room-temperature superconductor claims in physics 2026')">
-          <div class="starter-card-title">🔬 Scientific Research</div>
-          <div class="starter-card-desc">Summarize latest physics & space breakthroughs</div>
+        <div class="market-card" style="cursor:pointer;" onclick="quickPrompt('Summarize the recent room-temperature superconductor claims in physics 2026')">
+          <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">🔬 Science Discoveries</div>
+          <div style="font-size:12px; color:var(--text-secondary);">Explore exoplanets, NASA JWST, and quantum physics</div>
         </div>
 
-        <div class="starter-card" onclick="quickPrompt('Perform a live web search for today\\'s top breaking AI news')">
-          <div class="starter-card-title">🌐 Live Web Search</div>
-          <div class="starter-card-desc">Search real-time news and internet data</div>
+        <div class="market-card" style="cursor:pointer;" onclick="quickPrompt('Perform a live web search for today\\'s top breaking AI news')">
+          <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">🌐 Web Intelligence</div>
+          <div style="font-size:12px; color:var(--text-secondary);">Stream real-time web search results</div>
         </div>
       </div>
     </div>
@@ -269,7 +261,7 @@ function saveThreadState(threadId, messages) {
   if (!threadId || messages.length === 0) return;
 
   const firstUserMsg = messages.find(m => m.role === 'user');
-  const title = firstUserMsg ? firstUserMsg.content.slice(0, 24) + '...' : 'Conversation';
+  const title = firstUserMsg ? firstUserMsg.content.slice(0, 24) + '...' : 'Telemetry Stream';
 
   const existingIdx = chatThreads.findIndex(t => t.id === threadId);
 
@@ -370,16 +362,15 @@ function formatMarkdown(text) {
   return html;
 }
 
-// In-Browser Code Compiler Console
+// In-Browser Code Compiler Console (Outputs to both modal and HUD Live Terminal)
 function runCodeInCompiler(btn) {
   const code = btn.parentElement.parentElement.nextElementSibling.textContent;
   const modal = document.getElementById('compilerModal');
   const outputEl = document.getElementById('compilerOutput');
 
-  if (!modal || !outputEl) return;
+  if (modal && outputEl) modal.classList.remove('hidden');
 
-  modal.classList.remove('hidden');
-  outputEl.textContent = '⚡ Executing code in sandbox...\n\n';
+  logToHudTerminal('EXECUTING CODE MATRIX...');
 
   let logs = [];
   const customConsole = {
@@ -400,9 +391,11 @@ function runCodeInCompiler(btn) {
       output = '✓ Code executed successfully.';
     }
 
-    outputEl.textContent = '⚡ Execution Output:\n\n' + output;
+    if (outputEl) outputEl.textContent = '⚡ Execution Output:\n\n' + output;
+    logToHudTerminal(`EXECUTION RESULT: ${output.slice(0, 100)}...`);
   } catch (err) {
-    outputEl.textContent = '❌ Execution Error:\n\n' + err.stack;
+    if (outputEl) outputEl.textContent = '❌ Execution Error:\n\n' + err.stack;
+    logToHudTerminal(`EXECUTION ERROR: ${err.message}`);
   }
 }
 
@@ -412,20 +405,20 @@ function closeCompilerModal() {
 }
 
 function clearCurrentChat() {
-  if (confirm("Clear current conversation?")) {
+  if (confirm("Purge current telemetry stream?")) {
     startNewChat();
   }
 }
 
 function exportChatThread() {
-  if (currentMessages.length === 0) return alert("No chat messages to export.");
+  if (currentMessages.length === 0) return alert("No telemetry logs to export.");
   
   const text = currentMessages.map(m => `[${m.role.toUpperCase()}]:\n${m.content}\n`).join('\n---\n\n');
   const blob = new Blob([text], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `Riya_Chat_${Date.now()}.txt`;
+  a.download = `Riya_Telemetry_${Date.now()}.txt`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -439,19 +432,9 @@ function escapeHtml(str) {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function escapeJsString(str) {
-  return str.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
-}
-
 function copyCodeBlock(btn) {
   const code = btn.parentElement.parentElement.nextElementSibling.textContent;
   navigator.clipboard.writeText(code);
   btn.textContent = 'Copied!';
   setTimeout(() => btn.textContent = 'Copy', 2000);
-}
-
-function copyText(el, text) {
-  navigator.clipboard.writeText(text);
-  el.textContent = '✓ Copied';
-  setTimeout(() => el.textContent = '📋 Copy', 2000);
 }

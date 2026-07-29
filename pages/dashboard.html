@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Riya.AI — Studio</title>
+  <title>Riya.AI — Command Center</title>
   
   <link rel="stylesheet" href="../css/global.css"/>
   
@@ -21,124 +21,127 @@
 
   <div class="app-container">
 
-    <!-- ── LEFT SIDEBAR (BUTTERFLY 🦋 LOGO) ── -->
+    <!-- ── LEFT SIDEBAR (COMMAND MATRIX HUD) ── -->
     <aside class="sidebar">
       <div class="sidebar-header">
         <a href="#" class="brand-logo">
           <div class="brand-icon-box">🦋</div>
           <span class="brand-title">Riya.AI</span>
-          <span class="brand-badge">PRO</span>
+          <span class="brand-badge">HUD</span>
         </a>
         <button class="collapse-btn" onclick="toggleSidebar()" title="Toggle Sidebar">«</button>
       </div>
 
       <button class="new-chat-btn" onclick="startNewChat()">
         <span>+</span>
-        <span class="btn-text">New Chat</span>
+        <span class="btn-text">New Telemetry Stream</span>
       </button>
 
       <nav class="sidebar-nav">
         <a class="nav-item active" id="nav-chat" onclick="switchTab('chat')">
           <span class="nav-item-icon">💬</span>
-          <span class="nav-text">Chat Studio</span>
+          <span class="nav-text">Command Chat</span>
         </a>
         <a class="nav-item" id="nav-library" onclick="switchTab('library')">
           <span class="nav-item-icon">📁</span>
-          <span class="nav-text">My Library</span>
+          <span class="nav-text">Telemetry Vault</span>
         </a>
         <a class="nav-item" id="nav-markets" onclick="switchTab('markets')">
           <span class="nav-item-icon">📊</span>
-          <span class="nav-text">Market Intelligence</span>
+          <span class="nav-text">Market Telemetry</span>
         </a>
         <a class="nav-item" id="nav-science" onclick="switchTab('science')">
           <span class="nav-item-icon">🔬</span>
-          <span class="nav-text">Scientific Research</span>
+          <span class="nav-text">Science & Discoveries</span>
         </a>
         <a class="nav-item" id="nav-agents" onclick="switchTab('agents')">
           <span class="nav-item-icon">🤖</span>
-          <span class="nav-text">AI Agents</span>
+          <span class="nav-text">AI Agents Hub</span>
         </a>
       </nav>
 
-      <div class="sidebar-section-title">Recent Threads</div>
+      <div class="sidebar-section-title">Active Streams</div>
 
       <div class="chat-history-list" id="threadHistoryList">
-        <!-- Thread items loaded dynamically -->
+        <!-- Telemetry threads loaded dynamically -->
       </div>
 
       <div class="sidebar-footer">
         <div class="user-profile-box" onclick="toggleProfileModal()">
           <div class="user-avatar" id="sidebarUserAvatar">U</div>
           <div class="user-meta">
-            <span class="user-name-text" id="sidebarUserName">Developer</span>
-            <span class="user-plan-text" id="sidebarUserPlan">PRO PLAN</span>
+            <span class="user-name-text" id="sidebarUserName">Operator</span>
+            <span class="user-plan-text" id="sidebarUserPlan">COMMAND ACCESS</span>
           </div>
         </div>
         
         <div class="footer-actions">
-          <button class="footer-btn" onclick="toggleSettingsModal()" title="Settings">⚙️</button>
+          <button class="footer-btn" onclick="toggleSettingsModal()" title="HUD Settings">⚙️</button>
           <button class="footer-btn" onclick="handleSignOut()" title="Log Out">🚪</button>
         </div>
       </div>
     </aside>
 
-    <!-- ── MAIN WORKSPACE ── -->
+    <!-- ── MAIN HUD WORKSPACE ── -->
     <main class="workspace-main">
       
-      <!-- Top Workspace Header -->
+      <!-- Top Telemetry Header -->
       <header class="workspace-header">
         <div class="header-left">
-          <span class="header-title" id="headerTitle">Chat Studio</span>
+          <span class="header-title" id="headerTitle">Command Chat</span>
+          <div class="hud-telemetry-badge">
+            <span style="font-size:8px;">●</span> SYSTEM ONLINE | LATENCY 12ms | FPS 60
+          </div>
         </div>
 
         <div class="header-right">
           <button class="action-btn" onclick="toggleSettingsModal()">
-            <span>⚙️</span> Settings
+            <span>⚙️</span> HUD Config
           </button>
 
           <button class="action-btn" onclick="toggleProfileModal()">
-            <span>👤</span> Profile
+            <span>👤</span> Operator Profile
           </button>
 
           <button class="action-btn" onclick="clearCurrentChat()">
-            <span>🗑️</span> Clear
+            <span>🗑️</span> Purge Log
           </button>
 
           <button class="action-btn" onclick="exportChatThread()">
-            <span>📥</span> Export
+            <span>📥</span> Export Telemetry
           </button>
         </div>
       </header>
 
-      <!-- 1. CHAT WORKSPACE -->
+      <!-- 1. CHAT WORKSPACE (WITH EMBEDDED TERMINAL) -->
       <div class="chat-workspace" id="tab-content-chat">
         
         <div class="chat-feed-area" id="chatFeed">
           <!-- Welcome Screen -->
-          <div class="welcome-screen" id="welcomeScreen" style="margin:auto; text-align:center; max-width:660px;">
-            <div style="width:64px; height:64px; border-radius:16px; background:#fff; color:#000; display:flex; align-items:center; justify-content:center; font-size:36px; margin:0 auto 24px; font-weight:800;">🦋</div>
-            <h1 style="font-size:30px; font-weight:800; color:#fff; margin-bottom:10px;">What would you like to explore?</h1>
-            <p style="font-size:14px; color:var(--text-secondary); margin-bottom:36px;">Riya AI is ready for live code execution, web search, financial analysis, or deep scientific research.</p>
+          <div class="welcome-screen" id="welcomeScreen" style="margin:auto; text-align:center; max-width:680px;">
+            <div style="width:68px; height:68px; border-radius:20px; background:#fff; color:#000; display:flex; align-items:center; justify-content:center; font-size:38px; margin:0 auto 24px; font-weight:800; box-shadow:0 0 30px rgba(255,255,255,0.4);">🦋</div>
+            <h1 style="font-size:32px; font-weight:800; color:#fff; margin-bottom:10px; letter-spacing:-0.5px;">Sci-Fi Command Center Ready</h1>
+            <p style="font-size:14px; color:var(--text-secondary); margin-bottom:36px;">Execute live code matrix, internet telemetry search, or market analysis.</p>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; text-align:left;">
               <div class="market-card" style="cursor:pointer;" onclick="quickPrompt('Write a JavaScript function to filter an array of objects and run it in the compiler')">
-                <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">💻 Code & Compile</div>
-                <div style="font-size:12px; color:var(--text-secondary);">Write & test interactive code directly in browser</div>
+                <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">💻 Code Matrix</div>
+                <div style="font-size:12px; color:var(--text-secondary);">Execute live JavaScript & Python in terminal drawer</div>
               </div>
 
               <div class="market-card" style="cursor:pointer;" onclick="quickPrompt('Analyze current live Bitcoin & Ethereum market trend and support levels')">
-                <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">📊 Market Intelligence</div>
-                <div style="font-size:12px; color:var(--text-secondary);">Analyze live crypto prices & macro indicators</div>
+                <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">📊 Market Telemetry</div>
+                <div style="font-size:12px; color:var(--text-secondary);">Fetch live CoinGecko crypto tickers & forex data</div>
               </div>
 
               <div class="market-card" style="cursor:pointer;" onclick="quickPrompt('Summarize the recent room-temperature superconductor claims in physics 2026')">
-                <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">🔬 Scientific Research</div>
-                <div style="font-size:12px; color:var(--text-secondary);">Summarize latest physics & space breakthroughs</div>
+                <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">🔬 Science Discoveries</div>
+                <div style="font-size:12px; color:var(--text-secondary);">Explore exoplanets, NASA JWST, and quantum physics</div>
               </div>
 
               <div class="market-card" style="cursor:pointer;" onclick="quickPrompt('Perform a live web search for today\\'s top breaking AI news')">
-                <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">🌐 Live Web Search</div>
-                <div style="font-size:12px; color:var(--text-secondary);">Search real-time news and internet data</div>
+                <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">🌐 Web Intelligence</div>
+                <div style="font-size:12px; color:var(--text-secondary);">Stream real-time web search results</div>
               </div>
             </div>
           </div>
@@ -146,38 +149,54 @@
           <!-- Chat messages dynamically rendered here -->
         </div>
 
-        <!-- Command Input Bar -->
-        <div class="command-input-container">
-          <textarea id="chatInput" class="cmd-textarea" placeholder="Ask Riya anything or paste code... (Enter to send, Shift+Enter for new line)" rows="1" onkeydown="handleInputKeyDown(event)"></textarea>
-          <button class="cmd-send-btn" id="sendBtn" onclick="submitMessage()">➔</button>
+        <!-- Embedded Bottom HUD Bar (Input + Live Terminal Drawer) -->
+        <div class="hud-bottom-bar">
+          
+          <!-- Live Terminal Drawer -->
+          <div class="hud-terminal-drawer" id="hudTerminalDrawer">
+            <div class="hud-terminal-header">
+              <span>▶ HUD LIVE TERMINAL LOGS</span>
+              <span style="color:var(--accent-emerald);">● ACTIVE NODE</span>
+            </div>
+            <div id="terminalLogContent">
+              [SYSTEM] Riya AI Command Matrix initialized. Ready for user query...
+            </div>
+          </div>
+
+          <!-- Input Bar -->
+          <div class="command-input-container">
+            <textarea id="chatInput" class="cmd-textarea" placeholder="Enter telemetry command or query... (Enter to send, Shift+Enter for newline)" rows="1" onkeydown="handleInputKeyDown(event)"></textarea>
+            <button class="cmd-send-btn" id="sendBtn" onclick="submitMessage()">➔</button>
+          </div>
+
         </div>
 
       </div>
 
-      <!-- 2. MY LIBRARY WORKSPACE -->
+      <!-- 2. TELEMETRY VAULT WORKSPACE -->
       <div class="panel-view-container hidden" id="tab-content-library">
         <div class="view-header">
-          <h2 class="view-title">My Saved Library</h2>
-          <p class="view-subtitle">Access saved code snippets, prompts, and exported conversations.</p>
+          <h2 class="view-title">Telemetry Vault</h2>
+          <p class="view-subtitle">Access saved code snippets, prompts, and exported logs.</p>
         </div>
 
         <div style="display:flex; flex-direction:column; gap:14px;">
           <div class="market-card" style="cursor:pointer;" onclick="quickPrompt('Show all my saved Python and JavaScript code templates')">
-            <h3 style="font-weight:700; color:#fff; font-size:16px; margin-bottom:4px;">📜 Code Snippets Vault</h3>
-            <p style="color:var(--text-secondary); font-size:13px;">View and execute saved code snippets across your sessions.</p>
+            <h3 style="font-weight:700; color:#fff; font-size:16px; margin-bottom:4px;">📜 Code Matrix Vault</h3>
+            <p style="color:var(--text-secondary); font-size:13px;">Execute saved code snippets in live HUD terminal console.</p>
           </div>
 
           <div class="market-card" style="cursor:pointer;" onclick="quickPrompt('Show my favorite research prompts and templates')">
-            <h3 style="font-weight:700; color:#fff; font-size:16px; margin-bottom:4px;">⭐ Saved Research Prompts</h3>
-            <p style="color:var(--text-secondary); font-size:13px;">Custom system prompts and agent templates.</p>
+            <h3 style="font-weight:700; color:#fff; font-size:16px; margin-bottom:4px;">⭐ Saved Operator Templates</h3>
+            <p style="color:var(--text-secondary); font-size:13px;">Custom system prompts and agent configurations.</p>
           </div>
         </div>
       </div>
 
-      <!-- 3. MARKETS WORKSPACE -->
+      <!-- 3. MARKETS TELEMETRY WORKSPACE -->
       <div class="panel-view-container hidden" id="tab-content-markets">
         <div class="view-header">
-          <h2 class="view-title">Markets & Data Intelligence</h2>
+          <h2 class="view-title">Market Telemetry Matrix</h2>
           <p class="view-subtitle">Powered by CoinGecko API & Open Exchange Rates API.</p>
         </div>
 
@@ -190,7 +209,7 @@
             <div style="font-size:24px; font-weight:800; margin-bottom:4px;" id="mkt-btc-price">$67,420</div>
             <div style="font-size:12px; color:#34d399; font-weight:700;" id="mkt-btc-change">▲ +2.45% (24h)</div>
             <button class="action-btn" style="margin-top:14px; width:100%; justify-content:center;" onclick="quickPrompt('Provide a technical analysis of Bitcoin price trend and support levels')">
-              🦋 Analyze with Riya AI
+              🦋 Analyze Telemetry
             </button>
           </div>
 
@@ -202,7 +221,7 @@
             <div style="font-size:24px; font-weight:800; margin-bottom:4px;" id="mkt-eth-price">$3,520</div>
             <div style="font-size:12px; color:#34d399; font-weight:700;" id="mkt-eth-change">▲ +1.80% (24h)</div>
             <button class="action-btn" style="margin-top:14px; width:100%; justify-content:center;" onclick="quickPrompt('Analyze Ethereum DeFi growth, gas fee trends, and ETH targets')">
-              🦋 Analyze with Riya AI
+              🦋 Analyze Telemetry
             </button>
           </div>
 
@@ -214,16 +233,16 @@
             <div style="font-size:24px; font-weight:800; margin-bottom:4px;" id="mkt-inr-price">₹83.45</div>
             <div style="font-size:12px; color:#34d399; font-weight:700;" id="mkt-inr-change">▲ Live Forex</div>
             <button class="action-btn" style="margin-top:14px; width:100%; justify-content:center;" onclick="quickPrompt('What are the key macroeconomic drivers for USD/INR today?')">
-              🦋 Analyze with Riya AI
+              🦋 Analyze Telemetry
             </button>
           </div>
         </div>
       </div>
 
-      <!-- 4. SCIENCE WORKSPACE -->
+      <!-- 4. SCIENCE DISCOVERIES WORKSPACE -->
       <div class="panel-view-container hidden" id="tab-content-science">
         <div class="view-header">
-          <h2 class="view-title">Science & Research Feed</h2>
+          <h2 class="view-title">Science & Discoveries Feed</h2>
           <p class="view-subtitle">High-resolution scientific developments, astronomy, and AI advancements.</p>
         </div>
 
@@ -254,10 +273,10 @@
         </div>
       </div>
 
-      <!-- 5. AI AGENTS WORKSPACE -->
+      <!-- 5. AI AGENTS HUB WORKSPACE -->
       <div class="panel-view-container hidden" id="tab-content-agents">
         <div class="view-header">
-          <h2 class="view-title">Specialized AI Agents</h2>
+          <h2 class="view-title">Specialized AI Agents Hub</h2>
           <p class="view-subtitle">Activate custom engineering personas for your workflows.</p>
         </div>
 
@@ -286,24 +305,24 @@
 
   </div>
 
-  <!-- IN-BROWSER CODE COMPILER MODAL -->
+  <!-- ── IN-BROWSER CODE COMPILER MODAL ── -->
   <div class="glass-modal-overlay hidden" id="compilerModal">
     <div class="glass-modal-box" style="max-width: 760px; height: 500px; display:flex; flex-direction:column;">
       <div class="modal-head">
-        <span class="modal-title">▶ Live Interactive Code Console</span>
+        <span class="modal-title">▶ Live Code Console Matrix</span>
         <button class="modal-close-btn" onclick="closeCompilerModal()">✕</button>
       </div>
-      <div style="flex:1; background:#000000; border:1px solid var(--border-medium); border-radius:12px; padding:16px; font-family:var(--font-mono); font-size:13px; color:#34d399; overflow-y:auto; white-space:pre-wrap;" id="compilerOutput">
+      <div style="flex:1; background:#020204; border:1px solid var(--border-medium); border-radius:12px; padding:16px; font-family:var(--font-mono); font-size:13px; color:#34d399; overflow-y:auto; white-space:pre-wrap;" id="compilerOutput">
         // Console output...
       </div>
     </div>
   </div>
 
-  <!-- SETTINGS MODAL -->
+  <!-- ── SETTINGS MODAL (CLEAN CENTERED OVERLAY) ── -->
   <div class="glass-modal-overlay hidden" id="settingsModal">
     <div class="glass-modal-box">
       <div class="modal-head">
-        <span class="modal-title">⚙️ App Settings</span>
+        <span class="modal-title">⚙️ HUD Config & Settings</span>
         <button class="modal-close-btn" onclick="toggleSettingsModal()">✕</button>
       </div>
       
@@ -314,7 +333,7 @@
             <div style="font-size:12px; color:var(--text-secondary);">Current default LLM engine</div>
           </div>
           <select style="background:var(--bg-card); border:1px solid var(--border-medium); color:#fff; padding:8px 14px; border-radius:8px; outline:none; font-weight:600;">
-            <option>Riya 4.0 Ultra (Recommended)</option>
+            <option>Riya 4.0 Omni Command (Recommended)</option>
             <option>Riya 4.0 Flash</option>
             <option>Riya Code Architect</option>
           </select>
@@ -322,8 +341,8 @@
 
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <div style="font-weight:700; color:#fff;">Live Web Search</div>
-            <div style="font-size:12px; color:var(--text-secondary);">Fetch real-time internet data</div>
+            <div style="font-weight:700; color:#fff;">Live Telemetry Stream</div>
+            <div style="font-size:12px; color:var(--text-secondary);">Real-time internet web data</div>
           </div>
           <input type="checkbox" checked style="accent-color:#ffffff; width:20px; height:20px;"/>
         </div>
@@ -331,35 +350,35 @@
     </div>
   </div>
 
-  <!-- USER PROFILE MODAL -->
+  <!-- ── OPERATOR PROFILE MODAL (CLEAN CENTERED OVERLAY) ── -->
   <div class="glass-modal-overlay hidden" id="profileModal">
     <div class="glass-modal-box">
       <div class="modal-head">
-        <span class="modal-title">👤 User Account Profile</span>
+        <span class="modal-title">👤 Operator Profile</span>
         <button class="modal-close-btn" onclick="toggleProfileModal()">✕</button>
       </div>
 
       <div style="display:flex; align-items:center; gap:16px; margin-bottom:24px;">
         <div class="user-avatar" style="width:56px; height:56px; font-size:22px;">A</div>
         <div>
-          <h3 style="font-size:18px; font-weight:800; color:#fff;" id="profileModalName">Developer</h3>
-          <span style="font-size:12px; color:#34d399; font-weight:700;" id="profileModalPlan">PRO MEMBERSHIP</span>
+          <h3 style="font-size:18px; font-weight:800; color:#fff;" id="profileModalName">Operator</h3>
+          <span style="font-size:12px; color:#34d399; font-weight:700;" id="profileModalPlan">COMMAND ACCESS</span>
         </div>
       </div>
 
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px;">
         <div style="background:var(--bg-card); border:1px solid var(--border-subtle); padding:14px; border-radius:12px; text-align:center;">
-          <div style="font-size:20px; font-weight:800; color:#fff;">Active</div>
-          <div style="font-size:11px; color:var(--text-muted);">Account Status</div>
+          <div style="font-size:20px; font-weight:800; color:#fff;">ONLINE</div>
+          <div style="font-size:11px; color:var(--text-muted);">System Telemetry</div>
         </div>
         <div style="background:var(--bg-card); border:1px solid var(--border-subtle); padding:14px; border-radius:12px; text-align:center;">
-          <div style="font-size:20px; font-weight:800; color:#ffffff;">Unlimited</div>
-          <div style="font-size:11px; color:var(--text-muted);">Daily AI Queries</div>
+          <div style="font-size:20px; font-weight:800; color:#ffffff;">UNLIMITED</div>
+          <div style="font-size:11px; color:var(--text-muted);">Command Queries</div>
         </div>
       </div>
 
       <button onclick="handleSignOut()" style="width:100%; padding:13px; background:#ffffff; border:none; color:#000000; border-radius:12px; font-weight:800; cursor:pointer;">
-        Log Out of Account
+        Terminate Operator Session
       </button>
     </div>
   </div>
