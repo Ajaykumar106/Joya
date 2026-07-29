@@ -1,4 +1,4 @@
-// ── APP WORKSPACE NAVIGATION & DATA CONTROLLER ──
+// ── RIYA.AI APP CONTROLLER (NAVIGATION & MODALS) ──
 
 document.addEventListener('authReady', () => {
   const name = typeof userName !== 'undefined' ? userName : 'Developer';
@@ -19,37 +19,48 @@ document.addEventListener('authReady', () => {
     }
   }
 
-  // Load Markets Data
   fetchMarketsData();
 });
 
-// Workspace Tab Switcher
+// Workspace Tab Switcher (100% Functional Sidebar!)
 function switchTab(tabId) {
-  // Update Navigation Active State
+  // Update Active Class on Sidebar Nav Items
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
   const activeNav = document.getElementById(`nav-${tabId}`);
   if (activeNav) activeNav.classList.add('active');
 
-  // Hide All Workspace Panels
-  const chatView = document.getElementById('tab-content-chat');
-  const marketsView = document.getElementById('tab-content-markets');
-  const scienceView = document.getElementById('tab-content-science');
-  const agentsView = document.getElementById('tab-content-agents');
-
-  [chatView, marketsView, scienceView, agentsView].forEach(el => {
+  // Hide All Views
+  const views = ['chat', 'library', 'markets', 'science', 'agents'];
+  views.forEach(v => {
+    const el = document.getElementById(`tab-content-${v}`);
     if (el) el.classList.add('hidden');
   });
 
-  // Show Active Workspace Panel
+  // Show Selected View
   const target = document.getElementById(`tab-content-${tabId}`);
-  if (target) target.classList.remove('hidden');
+  if (target) {
+    target.classList.remove('hidden');
+  }
+
+  // Update Header Title
+  const headerTitle = document.getElementById('headerTitle');
+  if (headerTitle) {
+    const titles = {
+      chat: 'Chat Studio',
+      library: 'My Library',
+      markets: 'Market Intelligence',
+      science: 'Scientific Research',
+      agents: 'AI Agents'
+    };
+    headerTitle.textContent = titles[tabId] || 'Studio';
+  }
 
   if (tabId === 'markets') {
     fetchMarketsData();
   }
 }
 
-// Fetch Real Live Markets Data from CoinGecko & Forex APIs
+// Fetch Real Live Markets Data
 async function fetchMarketsData() {
   try {
     const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true");
@@ -92,6 +103,22 @@ async function fetchMarketsData() {
   } catch (e) {}
 }
 
+// Modal Controllers
 function toggleSettingsModal() {
-  alert("Riya AI Account Settings & API Keys are configured.");
+  const modal = document.getElementById('settingsModal');
+  if (modal) modal.classList.toggle('hidden');
+}
+
+function toggleProfileModal() {
+  const name = typeof userName !== 'undefined' ? userName : 'Developer';
+  const plan = typeof userPlan !== 'undefined' ? userPlan : 'free';
+
+  const pName = document.getElementById('profileModalName');
+  const pPlan = document.getElementById('profileModalPlan');
+
+  if (pName) pName.textContent = name;
+  if (pPlan) pPlan.textContent = `${plan.toUpperCase()} MEMBERSHIP`;
+
+  const modal = document.getElementById('profileModal');
+  if (modal) modal.classList.toggle('hidden');
 }
