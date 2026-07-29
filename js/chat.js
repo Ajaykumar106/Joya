@@ -1,10 +1,16 @@
-// ── RIYA.AI LIVE CHAT ENGINE & THREAD CONTROLLER ──
+// ── RIYA.AI ENGINE & CHAT CONTROLLER ──
 const BACKEND_URL = "https://riya-backend-ujz7.onrender.com";
 
 // State
 let currentMessages = [];
 let chatThreads = JSON.parse(localStorage.getItem('riya_chat_threads') || '[]');
 let activeThreadId = null;
+
+let stateFeatures = {
+  webSearch: true,
+  deepThink: true,
+  codeInterpreter: true
+};
 
 // Initialize on DOM Ready
 document.addEventListener('DOMContentLoaded', () => {
@@ -27,6 +33,19 @@ function toggleSidebar() {
   }
 }
 
+// Toggle Feature Pills
+function toggleFeature(featureKey) {
+  stateFeatures[featureKey] = !stateFeatures[featureKey];
+  const pill = document.getElementById(`${featureKey}Toggle`);
+  if (pill) {
+    if (stateFeatures[featureKey]) {
+      pill.classList.add('active');
+    } else {
+      pill.classList.remove('active');
+    }
+  }
+}
+
 // Handle Enter to Send Message
 function handleInputKeyDown(e) {
   if (e.key === 'Enter' && !e.shiftKey) {
@@ -35,7 +54,7 @@ function handleInputKeyDown(e) {
   }
 }
 
-// Submit Message (Real-Time Live Streaming)
+// Submit Message (Real-Time Live Streaming - DEFAULT ENGLISH ENFORCED)
 async function submitMessage() {
   const inputEl = document.getElementById('chatInput');
   const text = inputEl.value.trim();
@@ -57,7 +76,7 @@ async function submitMessage() {
     activeThreadId = 'thread_' + Date.now();
   }
 
-  // 1. Append User Message Bubble (Styled User Row)
+  // 1. Append User Message Bubble
   appendUserMessageUI(text);
   currentMessages.push({ role: 'user', content: text });
 
@@ -65,17 +84,26 @@ async function submitMessage() {
   const sendBtn = document.getElementById('sendBtn');
   if (sendBtn) sendBtn.disabled = true;
 
-  // 2. Append AI Response Bubble (Live Streaming Row)
+  // 2. Append AI Response Bubble
   const aiBubbleEl = appendAiMessageUI('');
-  aiBubbleEl.innerHTML = '<span style="color:var(--accent-purple); font-size:13px; font-weight:600;">🪐 Live thinking...</span><span class="typing-cursor">●</span>';
+  aiBubbleEl.innerHTML = '<span style="color:var(--accent-purple); font-size:13px; font-weight:600;">🪐 Riya is thinking...</span><span class="typing-cursor">●</span>';
 
   let fullAiResponse = '';
 
   try {
-    const historyPayload = currentMessages.map(m => ({
-      role: m.role === 'user' ? 'user' : 'assistant',
-      content: m.content
-    }));
+    // Force English System Instruction by Default
+    const systemInstruction = {
+      role: 'system',
+      content: 'You are Riya AI, an ultra-intelligent AI companion created by Ajay Kumar AJ. ALWAYS respond in fluent, natural English by default unless the user explicitly requests a different language in their prompt.'
+    };
+
+    const historyPayload = [
+      systemInstruction,
+      ...currentMessages.map(m => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.content
+      }))
+    ];
 
     const response = await fetch(`${BACKEND_URL}/api/chat`, {
       method: 'POST',
@@ -84,7 +112,8 @@ async function submitMessage() {
         messages: historyPayload,
         userName: typeof userName !== 'undefined' ? userName : 'Developer',
         plan: typeof userPlan !== 'undefined' ? userPlan : 'free',
-        stream: true
+        stream: true,
+        language: 'English' // Explicitly enforce English
       })
     });
 
@@ -262,7 +291,7 @@ function saveThreadState(threadId, messages) {
   renderThreadHistory();
 }
 
-// Render Thread History List in Sidebar (100% Clickable!)
+// Render Thread History List in Sidebar
 function renderThreadHistory() {
   const container = document.getElementById('threadHistoryList');
   if (!container) return;
@@ -382,6 +411,25 @@ function closeCompilerModal() {
   if (modal) modal.classList.add('hidden');
 }
 
+function clearCurrentChat() {
+  if (confirm("Clear current conversation?")) {
+    startNewChat();
+  }
+}
+
+function exportChatThread() {
+  if (currentMessages.length === 0) return alert("No chat messages to export.");
+  
+  const text = currentMessages.map(m => `[${m.role.toUpperCase()}]:\n${m.content}\n`).join('\n---\n\n');
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Riya_Chat_${Date.now()}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function scrollChatToBottom() {
   const feed = document.getElementById('chatFeed');
   if (feed) feed.scrollTop = feed.scrollHeight;
@@ -400,4 +448,10 @@ function copyCodeBlock(btn) {
   navigator.clipboard.writeText(code);
   btn.textContent = 'Copied!';
   setTimeout(() => btn.textContent = 'Copy', 2000);
+}
+
+function copyText(el, text) {
+  navigator.clipboard.writeText(text);
+  el.textContent = '✓ Copied';
+  setTimeout(() => el.textContent = '📋 Copy', 2000);
 }
