@@ -21,7 +21,7 @@
 
   <div class="app-container">
 
-    <!-- ── LEFT SIDEBAR (GLASSMORPHIC & COLLAPSIBLE) ── -->
+    <!-- ── LEFT SIDEBAR (MONOCHROME BLACK & WHITE) ── -->
     <aside class="sidebar">
       <div class="sidebar-header">
         <a href="#" class="brand-logo">
@@ -110,35 +110,35 @@
         </div>
       </header>
 
-      <!-- 1. CHAT WORKSPACE (DEFAULT & PRIMARY) -->
+      <!-- 1. CHAT WORKSPACE -->
       <div class="chat-workspace" id="tab-content-chat">
         
         <div class="chat-feed-area" id="chatFeed">
           <!-- Welcome Screen -->
-          <div class="welcome-screen" id="welcomeScreen">
-            <div class="welcome-logo-badge">🪐</div>
-            <h1 class="welcome-heading" id="welcomeHeading">What would you like to explore?</h1>
-            <p class="welcome-subtext">Riya AI is ready for live code execution, web search, financial analysis, or deep scientific research.</p>
+          <div class="welcome-screen" id="welcomeScreen" style="margin:auto; text-align:center; max-width:660px;">
+            <div style="width:64px; height:64px; border-radius:16px; background:#fff; color:#000; display:flex; align-items:center; justify-content:center; font-size:32px; margin:0 auto 24px; font-weight:800;">🪐</div>
+            <h1 style="font-size:30px; font-weight:800; color:#fff; margin-bottom:10px;">What would you like to explore?</h1>
+            <p style="font-size:14px; color:var(--text-secondary); margin-bottom:36px;">Riya AI is ready for live code execution, web search, financial analysis, or deep scientific research.</p>
 
-            <div class="starter-prompts-grid">
-              <div class="starter-card" onclick="quickPrompt('Write a JavaScript function to filter an array of objects and run it in the compiler')">
-                <div class="starter-card-title">💻 Code & Compile</div>
-                <div class="starter-card-desc">Write & test interactive code directly in browser</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; text-align:left;">
+              <div class="market-card" style="cursor:pointer;" onclick="quickPrompt('Write a JavaScript function to filter an array of objects and run it in the compiler')">
+                <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">💻 Code & Compile</div>
+                <div style="font-size:12px; color:var(--text-secondary);">Write & test interactive code directly in browser</div>
               </div>
 
-              <div class="starter-card" onclick="quickPrompt('Analyze current live Bitcoin & Ethereum market trend and support levels')">
-                <div class="starter-card-title">📊 Market Intelligence</div>
-                <div class="starter-card-desc">Analyze live crypto prices & macro indicators</div>
+              <div class="market-card" style="cursor:pointer;" onclick="quickPrompt('Analyze current live Bitcoin & Ethereum market trend and support levels')">
+                <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">📊 Market Intelligence</div>
+                <div style="font-size:12px; color:var(--text-secondary);">Analyze live crypto prices & macro indicators</div>
               </div>
 
-              <div class="starter-card" onclick="quickPrompt('Summarize the recent room-temperature superconductor claims in physics 2026')">
-                <div class="starter-card-title">🔬 Scientific Research</div>
-                <div class="starter-card-desc">Summarize latest physics & space breakthroughs</div>
+              <div class="market-card" style="cursor:pointer;" onclick="quickPrompt('Summarize the recent room-temperature superconductor claims in physics 2026')">
+                <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">🔬 Scientific Research</div>
+                <div style="font-size:12px; color:var(--text-secondary);">Summarize latest physics & space breakthroughs</div>
               </div>
 
-              <div class="starter-card" onclick="quickPrompt('Perform a live web search for today\\'s top breaking AI news')">
-                <div class="starter-card-title">🌐 Live Web Search</div>
-                <div class="starter-card-desc">Search real-time news and internet data</div>
+              <div class="market-card" style="cursor:pointer;" onclick="quickPrompt('Perform a live web search for today\\'s top breaking AI news')">
+                <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">🌐 Live Web Search</div>
+                <div style="font-size:12px; color:var(--text-secondary);">Search real-time news and internet data</div>
               </div>
             </div>
           </div>
@@ -181,39 +181,39 @@
           <p class="view-subtitle">Powered by CoinGecko API & Open Exchange Rates API.</p>
         </div>
 
-        <div class="markets-grid">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:16px;">
           <div class="market-card">
-            <div class="market-card-top">
-              <span class="market-name">Bitcoin</span>
-              <span class="market-symbol">BTC/USD</span>
+            <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+              <span style="font-weight:700; color:#fff;">Bitcoin</span>
+              <span style="color:var(--text-muted); font-size:11px;">BTC/USD</span>
             </div>
-            <div class="market-price" id="mkt-btc-price">$67,420</div>
-            <div class="market-change change-up" id="mkt-btc-change">▲ +2.45% (24h)</div>
-            <button class="analyze-ai-btn" onclick="quickPrompt('Provide a technical analysis of Bitcoin price trend and support levels')">
+            <div style="font-size:24px; font-weight:800; margin-bottom:4px;" id="mkt-btc-price">$67,420</div>
+            <div style="font-size:12px; color:#34d399; font-weight:700;" id="mkt-btc-change">▲ +2.45% (24h)</div>
+            <button class="action-btn" style="margin-top:14px; width:100%; justify-content:center;" onclick="quickPrompt('Provide a technical analysis of Bitcoin price trend and support levels')">
               🪐 Analyze with Riya AI
             </button>
           </div>
 
           <div class="market-card">
-            <div class="market-card-top">
-              <span class="market-name">Ethereum</span>
-              <span class="market-symbol">ETH/USD</span>
+            <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+              <span style="font-weight:700; color:#fff;">Ethereum</span>
+              <span style="color:var(--text-muted); font-size:11px;">ETH/USD</span>
             </div>
-            <div class="market-price" id="mkt-eth-price">$3,520</div>
-            <div class="market-change change-up" id="mkt-eth-change">▲ +1.80% (24h)</div>
-            <button class="analyze-ai-btn" onclick="quickPrompt('Analyze Ethereum DeFi growth, gas fee trends, and ETH targets')">
+            <div style="font-size:24px; font-weight:800; margin-bottom:4px;" id="mkt-eth-price">$3,520</div>
+            <div style="font-size:12px; color:#34d399; font-weight:700;" id="mkt-eth-change">▲ +1.80% (24h)</div>
+            <button class="action-btn" style="margin-top:14px; width:100%; justify-content:center;" onclick="quickPrompt('Analyze Ethereum DeFi growth, gas fee trends, and ETH targets')">
               🪐 Analyze with Riya AI
             </button>
           </div>
 
           <div class="market-card">
-            <div class="market-card-top">
-              <span class="market-name">USD / INR</span>
-              <span class="market-symbol">USD/INR</span>
+            <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+              <span style="font-weight:700; color:#fff;">USD / INR</span>
+              <span style="color:var(--text-muted); font-size:11px;">USD/INR</span>
             </div>
-            <div class="market-price" id="mkt-inr-price">₹83.45</div>
-            <div class="market-change change-up" id="mkt-inr-change">▲ Live Forex</div>
-            <button class="analyze-ai-btn" onclick="quickPrompt('What are the key macroeconomic drivers for USD/INR today?')">
+            <div style="font-size:24px; font-weight:800; margin-bottom:4px;" id="mkt-inr-price">₹83.45</div>
+            <div style="font-size:12px; color:#34d399; font-weight:700;" id="mkt-inr-change">▲ Live Forex</div>
+            <button class="action-btn" style="margin-top:14px; width:100%; justify-content:center;" onclick="quickPrompt('What are the key macroeconomic drivers for USD/INR today?')">
               🪐 Analyze with Riya AI
             </button>
           </div>
@@ -227,30 +227,26 @@
           <p class="view-subtitle">High-resolution scientific developments, astronomy, and AI advancements.</p>
         </div>
 
-        <div class="science-card-grid">
-          <div class="science-news-card">
-            <img class="science-card-img" src="https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=800&auto=format&fit=crop" alt="Space"/>
-            <div class="science-card-content">
-              <div>
-                <div class="science-card-tag">ASTRONOMY & NASA</div>
-                <h3 style="font-size:16px; font-weight:700; color:#fff; margin-bottom:8px;">James Webb Telescope Discovers Atmospheric Water on Exoplanet K2-18b</h3>
-                <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">Spectroscopic analysis reveals water vapor and potential biosignature gases in the habitable zone.</p>
-              </div>
-              <button class="analyze-ai-btn" onclick="quickPrompt('Explain the James Webb Telescope discovery of water vapor on exoplanet K2-18b in detail.')">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:20px;">
+          <div class="market-card" style="padding:0; overflow:hidden;">
+            <img src="https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=800&auto=format&fit=crop" style="width:100%; height:180px; object-fit:cover;" alt="Space"/>
+            <div style="padding:20px;">
+              <div style="font-size:11px; font-weight:700; color:#38bdf8; margin-bottom:6px;">ASTRONOMY & NASA</div>
+              <h3 style="font-size:16px; font-weight:700; color:#fff; margin-bottom:8px;">James Webb Telescope Discovers Atmospheric Water on Exoplanet K2-18b</h3>
+              <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">Spectroscopic analysis reveals water vapor and potential biosignature gases in the habitable zone.</p>
+              <button class="action-btn" style="width:100%; justify-content:center;" onclick="quickPrompt('Explain the James Webb Telescope discovery of water vapor on exoplanet K2-18b in detail.')">
                 🪐 Analyze in Chat
               </button>
             </div>
           </div>
 
-          <div class="science-news-card">
-            <img class="science-card-img" src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=800&auto=format&fit=crop" alt="Quantum"/>
-            <div class="science-card-content">
-              <div>
-                <div class="science-card-tag">QUANTUM PHYSICS</div>
-                <h3 style="font-size:16px; font-weight:700; color:#fff; margin-bottom:8px;">Fault-Tolerant Logical Qubits Demonstrate 1,000+ Stable Quantum Operations</h3>
-                <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">Breakthrough in topological error correction brings practical quantum computing years closer.</p>
-              </div>
-              <button class="analyze-ai-btn" onclick="quickPrompt('Explain fault-tolerant logical qubits and topological quantum error correction.')">
+          <div class="market-card" style="padding:0; overflow:hidden;">
+            <img src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=800&auto=format&fit=crop" style="width:100%; height:180px; object-fit:cover;" alt="Quantum"/>
+            <div style="padding:20px;">
+              <div style="font-size:11px; font-weight:700; color:#38bdf8; margin-bottom:6px;">QUANTUM PHYSICS</div>
+              <h3 style="font-size:16px; font-weight:700; color:#fff; margin-bottom:8px;">Fault-Tolerant Logical Qubits Demonstrate 1,000+ Stable Quantum Operations</h3>
+              <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">Breakthrough in topological error correction brings practical quantum computing years closer.</p>
+              <button class="action-btn" style="width:100%; justify-content:center;" onclick="quickPrompt('Explain fault-tolerant logical qubits and topological quantum error correction.')">
                 🪐 Analyze in Chat
               </button>
             </div>
@@ -265,12 +261,12 @@
           <p class="view-subtitle">Activate custom engineering personas for your workflows.</p>
         </div>
 
-        <div class="agents-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
           <div class="market-card">
             <div style="font-size:24px; margin-bottom:12px;">💻</div>
             <h3 style="font-size:16px; font-weight:700; color:#fff; margin-bottom:6px;">Software Architect Agent</h3>
             <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">Specialized in clean architecture, refactoring, and full-stack code execution.</p>
-            <button class="analyze-ai-btn" onclick="quickPrompt('Act as a Senior Software Architect and audit my codebase architecture.')">
+            <button class="action-btn" style="width:100%; justify-content:center;" onclick="quickPrompt('Act as a Senior Software Architect and audit my codebase architecture.')">
               Activate Agent
             </button>
           </div>
@@ -279,7 +275,7 @@
             <div style="font-size:24px; margin-bottom:12px;">📈</div>
             <h3 style="font-size:16px; font-weight:700; color:#fff; margin-bottom:6px;">Quant Analyst Agent</h3>
             <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">Specialized in financial modeling, technical indicators, and crypto trends.</p>
-            <button class="analyze-ai-btn" onclick="quickPrompt('Act as a Quant Analyst and analyze key crypto indicators for this week.')">
+            <button class="action-btn" style="width:100%; justify-content:center;" onclick="quickPrompt('Act as a Quant Analyst and analyze key crypto indicators for this week.')">
               Activate Agent
             </button>
           </div>
@@ -297,13 +293,13 @@
         <span class="modal-title">▶ Live Interactive Code Console</span>
         <button class="modal-close-btn" onclick="closeCompilerModal()">✕</button>
       </div>
-      <div style="flex:1; background:rgba(6, 4, 14, 0.95); border:1px solid var(--border-medium); border-radius:12px; padding:16px; font-family:var(--font-mono); font-size:13px; color:#34d399; overflow-y:auto; white-space:pre-wrap;" id="compilerOutput">
+      <div style="flex:1; background:#000000; border:1px solid var(--border-medium); border-radius:12px; padding:16px; font-family:var(--font-mono); font-size:13px; color:#34d399; overflow-y:auto; white-space:pre-wrap;" id="compilerOutput">
         // Console output...
       </div>
     </div>
   </div>
 
-  <!-- ── SETTINGS MODAL ── -->
+  <!-- ── SETTINGS MODAL (CLEAN CENTERED OVERLAY) ── -->
   <div class="glass-modal-overlay hidden" id="settingsModal">
     <div class="glass-modal-box">
       <div class="modal-head">
@@ -311,13 +307,13 @@
         <button class="modal-close-btn" onclick="toggleSettingsModal()">✕</button>
       </div>
       
-      <div style="display:flex; flex-direction:column; gap:16px;">
+      <div style="display:flex; flex-direction:column; gap:20px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <div style="font-weight:600; color:#fff;">AI Model Selection</div>
+            <div style="font-weight:700; color:#fff;">AI Model Selection</div>
             <div style="font-size:12px; color:var(--text-secondary);">Current default LLM engine</div>
           </div>
-          <select style="background:var(--glass-input); border:1px solid var(--border-medium); color:#fff; padding:6px 12px; border-radius:8px; outline:none;">
+          <select style="background:var(--bg-card); border:1px solid var(--border-medium); color:#fff; padding:8px 14px; border-radius:8px; outline:none; font-weight:600;">
             <option>Riya 3.0 Ultra (Recommended)</option>
             <option>Riya 3.0 Flash</option>
             <option>Riya Code Engineer</option>
@@ -326,24 +322,16 @@
 
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <div style="font-weight:600; color:#fff;">Live Web Search</div>
+            <div style="font-weight:700; color:#fff;">Live Web Search</div>
             <div style="font-size:12px; color:var(--text-secondary);">Fetch real-time internet data</div>
           </div>
-          <input type="checkbox" checked style="accent-color:var(--accent-purple); width:18px; height:18px;"/>
-        </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <div style="font-weight:600; color:#fff;">Glassmorphism Blur</div>
-            <div style="font-size:12px; color:var(--text-secondary);">Frosted glass UI backdrop effects</div>
-          </div>
-          <input type="checkbox" checked style="accent-color:var(--accent-purple); width:18px; height:18px;"/>
+          <input type="checkbox" checked style="accent-color:#ffffff; width:20px; height:20px;"/>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ── USER PROFILE MODAL ── -->
+  <!-- ── USER PROFILE MODAL (CLEAN CENTERED OVERLAY) ── -->
   <div class="glass-modal-overlay hidden" id="profileModal">
     <div class="glass-modal-box">
       <div class="modal-head">
@@ -351,26 +339,26 @@
         <button class="modal-close-btn" onclick="toggleProfileModal()">✕</button>
       </div>
 
-      <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
-        <div class="user-avatar" style="width:54px; height:54px; font-size:22px;">A</div>
+      <div style="display:flex; align-items:center; gap:16px; margin-bottom:24px;">
+        <div class="user-avatar" style="width:56px; height:56px; font-size:22px;">A</div>
         <div>
           <h3 style="font-size:18px; font-weight:800; color:#fff;" id="profileModalName">Developer</h3>
-          <span style="font-size:12px; color:var(--accent-emerald); font-weight:700;" id="profileModalPlan">PRO MEMBERSHIP</span>
+          <span style="font-size:12px; color:#34d399; font-weight:700;" id="profileModalPlan">PRO MEMBERSHIP</span>
         </div>
       </div>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
-        <div style="background:var(--glass-card); border:1px solid var(--border-subtle); padding:12px; border-radius:12px; text-align:center;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px;">
+        <div style="background:var(--bg-card); border:1px solid var(--border-subtle); padding:14px; border-radius:12px; text-align:center;">
           <div style="font-size:20px; font-weight:800; color:#fff;">Active</div>
           <div style="font-size:11px; color:var(--text-muted);">Account Status</div>
         </div>
-        <div style="background:var(--glass-card); border:1px solid var(--border-subtle); padding:12px; border-radius:12px; text-align:center;">
-          <div style="font-size:20px; font-weight:800; color:var(--accent-purple);">Unlimited</div>
+        <div style="background:var(--bg-card); border:1px solid var(--border-subtle); padding:14px; border-radius:12px; text-align:center;">
+          <div style="font-size:20px; font-weight:800; color:#ffffff;">Unlimited</div>
           <div style="font-size:11px; color:var(--text-muted);">Daily AI Queries</div>
         </div>
       </div>
 
-      <button onclick="handleSignOut()" style="width:100%; padding:12px; background:rgba(244, 63, 94, 0.2); border:1px solid rgba(244,63,94,0.4); color:#f87171; border-radius:12px; font-weight:700; cursor:pointer;">
+      <button onclick="handleSignOut()" style="width:100%; padding:13px; background:#ffffff; border:none; color:#000000; border-radius:12px; font-weight:800; cursor:pointer;">
         Log Out of Account
       </button>
     </div>

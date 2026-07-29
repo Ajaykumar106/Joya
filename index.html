@@ -19,35 +19,32 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: radial-gradient(circle at 50% 30%, #1e1342 0%, #0a0718 60%, #04030a 100%);
+      background: #000000;
     }
 
-    .glass-login-card {
+    .monochrome-login-card {
       width: 100%;
-      max-width: 440px;
+      max-width: 420px;
       padding: 44px 38px;
-      background: rgba(22, 17, 48, 0.65);
-      border: 1px solid rgba(168, 85, 247, 0.3);
+      background: #0a0a0d;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: var(--radius-xl);
-      backdrop-filter: blur(30px);
-      -webkit-backdrop-filter: blur(30px);
-      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.7), 0 0 50px rgba(168, 85, 247, 0.15);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
       text-align: center;
     }
 
-    .brand-saturn-avatar {
+    .brand-avatar-black {
       width: 64px;
       height: 64px;
-      border-radius: 20px;
-      background: var(--accent-gradient);
+      border-radius: 18px;
+      background: #ffffff;
+      color: #000000;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 32px;
-      color: #fff;
+      font-weight: 800;
       margin: 0 auto 24px;
-      box-shadow: 0 0 36px rgba(168, 85, 247, 0.5);
-      animation: pulseGlow 3s infinite alternate;
     }
 
     .login-title {
@@ -68,12 +65,12 @@
     .btn-google-login {
       width: 100%;
       padding: 15px;
-      background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(99, 102, 241, 0.15));
-      border: 1px solid rgba(168, 85, 247, 0.4);
+      background: #ffffff;
+      border: none;
       border-radius: var(--radius-pill);
-      color: #fff;
+      color: #000000;
       font-size: 14.5px;
-      font-weight: 700;
+      font-weight: 800;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -84,9 +81,7 @@
     }
 
     .btn-google-login:hover {
-      background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(99, 102, 241, 0.3));
-      border-color: rgba(168, 85, 247, 0.7);
-      box-shadow: 0 0 24px rgba(168, 85, 247, 0.4);
+      background: #e2e8f0;
       transform: translateY(-1px);
     }
 
@@ -98,7 +93,7 @@
     .auth-loader {
       display: none;
       font-size: 13px;
-      color: var(--accent-purple);
+      color: #ffffff;
       margin-top: 14px;
       font-weight: 600;
     }
@@ -112,8 +107,8 @@
 </head>
 <body>
 
-  <div class="glass-login-card">
-    <div class="brand-saturn-avatar">🪐</div>
+  <div class="monochrome-login-card">
+    <div class="brand-avatar-black">🪐</div>
     <h1 class="login-title">Riya.AI Studio</h1>
     <p class="login-sub">Sign in to access your intelligent software workspace, live market data, and research agents.</p>
 
