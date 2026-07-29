@@ -117,31 +117,53 @@ async function submitMessage() {
               const parsed = JSON.parse(line.slice(6));
               if (parsed.token) {
                 fullAiResponse += parsed.token;
-                aiBubbleEl.innerHTML = formatMarkdown(fullAiResponse) + '<span class="typing-cursor" style="color:var(--accent-purple); margin-left:4px;">●</span>';
+                aiBubbleEl.innerHTML = formatMarkdown(fullAiResponse) + '<span class="typing-cursor" style="color:var(--text-secondary); margin-left:4px;">●</span>';
                 scrollChatToBottom();
               }
             } catch (e) {}
           }
         }
       }
+      finalizeResponseUI();
     } else {
       const json = await response.json();
       fullAiResponse = json.reply || json.response || "No response received.";
+      simulateTypingEffect();
     }
   } catch (error) {
     console.error("Chat Error:", error);
     fullAiResponse = "⚠️ Connection issue. Render backend warming up or offline. Please retry in a moment.";
+    simulateTypingEffect();
   }
 
-  // Finalize Response Output
-  // Detect if there's an HTML code block
-  const codeBlockRegex = /```html\n([\s\S]*?)```/;
-  const codeMatch = fullAiResponse.match(codeBlockRegex);
-  
-  if (codeMatch && codeMatch[1]) {
-    const rawCode = codeMatch[1];
-    // Replace the code block in the message with a button to open preview
-    const modifiedResponse = fullAiResponse.replace(codeBlockRegex, `
+  function simulateTypingEffect() {
+    let index = 0;
+    aiBubbleEl.innerHTML = '';
+    const typingSpeed = 15; // ms per character for simulated fast typing
+
+    function typeChar() {
+      if (index < fullAiResponse.length) {
+        // Simple chunking to avoid breaking markdown mid-render for large dumps
+        const chunk = fullAiResponse.substring(0, index + 3);
+        aiBubbleEl.innerHTML = formatMarkdown(chunk) + '<span class="typing-cursor" style="color:var(--text-secondary); margin-left:4px;">●</span>';
+        index += 3;
+        scrollChatToBottom();
+        setTimeout(typeChar, typingSpeed);
+      } else {
+        finalizeResponseUI();
+      }
+    }
+    typeChar();
+  }
+
+  function finalizeResponseUI() {
+    // Detect if there's an HTML code block
+    const codeBlockRegex = /```html\n([\s\S]*?)```/;
+    const codeMatch = fullAiResponse.match(codeBlockRegex);
+    
+    if (codeMatch && codeMatch[1]) {
+      const rawCode = codeMatch[1];
+      const modifiedResponse = fullAiResponse.replace(codeBlockRegex, `
 <div style="margin: 16px 0; border: 1px solid var(--border-medium); border-radius: 8px; overflow: hidden;">
   <div style="background: rgba(255,255,255,0.05); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
     <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px;">
@@ -154,20 +176,21 @@ async function submitMessage() {
   </div>
   <textarea style="display:none;">${escapeHtml(rawCode)}</textarea>
 </div>
-    `);
-    aiBubbleEl.innerHTML = formatMarkdown(modifiedResponse);
-  } else {
-    aiBubbleEl.innerHTML = formatMarkdown(fullAiResponse);
+      `);
+      aiBubbleEl.innerHTML = formatMarkdown(modifiedResponse);
+    } else {
+      aiBubbleEl.innerHTML = formatMarkdown(fullAiResponse);
+    }
+
+    currentMessages.push({ role: 'assistant', content: fullAiResponse });
+
+    // Save to LocalStorage Threads
+    saveThreadState(activeThreadId, currentMessages);
+
+    // Enable Send Button
+    if (sendBtn) sendBtn.disabled = false;
+    scrollChatToBottom();
   }
-
-  currentMessages.push({ role: 'assistant', content: fullAiResponse });
-
-  // Save to LocalStorage Threads
-  saveThreadState(activeThreadId, currentMessages);
-
-  // Enable Send Button
-  if (sendBtn) sendBtn.disabled = false;
-  scrollChatToBottom();
 }
 
 // Append User Message UI Row
