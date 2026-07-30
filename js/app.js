@@ -84,7 +84,7 @@ inputEl.addEventListener('input', () => {
   inputEl.style.height = (inputEl.scrollHeight) + 'px';
 });
 
-// TEXT CHAT (Streaming)
+// TEXT CHAT (Streaming + Typewriter Queue)
 async function sendTextMessage() {
   const text = inputEl.value.trim();
   if (!text) return;
@@ -99,6 +99,29 @@ async function sendTextMessage() {
   let fullAiResponse = '';
   setOrbState('thinking');
   statusText.innerText = "THINKING";
+
+  // Typing Queue System for fast APIs (like Groq)
+  let typeQueue = "";
+  let currentRenderedText = "";
+  let isTyping = false;
+
+  function processTypeQueue() {
+    if (typeQueue.length > 0) {
+      isTyping = true;
+      let chunkSize = Math.max(1, Math.floor(typeQueue.length / 15)); 
+      chunkSize = Math.min(chunkSize, 4);
+      
+      currentRenderedText += typeQueue.substring(0, chunkSize);
+      typeQueue = typeQueue.substring(chunkSize);
+      
+      aiMsgEl.innerHTML = formatMarkdown(currentRenderedText) + '<span class="typing-cursor"></span>';
+      scrollToBottom();
+      
+      setTimeout(processTypeQueue, 25);
+    } else {
+      isTyping = false;
+    }
+  }
 
   try {
     const response = await fetch(`${BACKEND_URL}/api/chat`, {
@@ -126,8 +149,10 @@ async function sendTextMessage() {
               const parsed = JSON.parse(line.slice(6));
               if (parsed.token) {
                 fullAiResponse += parsed.token;
-                aiMsgEl.innerHTML = formatMarkdown(fullAiResponse) + '<span class="typing-cursor"></span>';
-                scrollToBottom();
+                typeQueue += parsed.token;
+                if (!isTyping) {
+                  processTypeQueue();
+                }
               }
             } catch (e) {}
           }
@@ -136,16 +161,25 @@ async function sendTextMessage() {
     } else {
       const json = await response.json();
       fullAiResponse = json.reply || "No response received.";
+      typeQueue += fullAiResponse;
+      if (!isTyping) processTypeQueue();
     }
   } catch (error) {
     fullAiResponse = "Connection established, but the neural link is warming up. Try again in a moment.";
+    typeQueue += fullAiResponse;
+    if (!isTyping) processTypeQueue();
   }
 
-  aiMsgEl.innerHTML = formatMarkdown(fullAiResponse);
-  messages.push({ role: 'assistant', content: fullAiResponse });
-  scrollToBottom();
-  setOrbState('idle');
-  statusText.innerText = "ONLINE";
+  const checkTypingInterval = setInterval(() => {
+    if (!isTyping && typeQueue.length === 0) {
+      clearInterval(checkTypingInterval);
+      aiMsgEl.innerHTML = formatMarkdown(fullAiResponse);
+      messages.push({ role: 'assistant', content: fullAiResponse });
+      scrollToBottom();
+      setOrbState('idle');
+      statusText.innerText = "ONLINE";
+    }
+  }, 100);
 }
 
 // VOICE CHAT (Non-streaming + TTS)
@@ -169,7 +203,7 @@ async function sendVoiceMessage(text) {
       body: JSON.stringify({ messages, userName: 'Sir', stream: false })
     });
     const chatData = await chatRes.json();
-    replyText = chatData.reply || "Connection issue with Gemini. Check API keys.";
+    replyText = chatData.reply || "Connection issue with Groq/Gemini. Check API keys.";
     
     messages.push({ role: 'assistant', content: replyText });
     aiMsgEl.innerHTML = formatMarkdown(replyText);
