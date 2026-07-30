@@ -1,124 +1,127 @@
-// ── RIYA.AI APP CONTROLLER (NAVIGATION & MODALS) ──
+const BACKEND_URL = "https://riya-backend-ujz7.onrender.com";
 
-document.addEventListener('authReady', () => {
-  const name = typeof userName !== 'undefined' ? userName : 'Developer';
-  const plan = typeof userPlan !== 'undefined' ? userPlan : 'free';
+let messages = [
+  { role: 'system', content: 'You are Riya, an elite, highly secure, private AI companion. You have access to the best models and act as a powerful protector and personal assistant. Keep responses elegant, serious, and deeply personal. Do not use generic AI language.' }
+];
 
-  const nameEl = document.getElementById('sidebarUserName');
-  const planEl = document.getElementById('sidebarUserPlan');
-  const avEl = document.getElementById('sidebarUserAvatar');
-
-  if (nameEl) nameEl.textContent = name;
-  if (planEl) planEl.textContent = `${plan.toUpperCase()} PLAN`;
-
-  if (avEl) {
-    if (typeof userPhotoURL !== 'undefined' && userPhotoURL) {
-      avEl.innerHTML = `<img src="${userPhotoURL}" alt="U"/>`;
-    } else {
-      avEl.textContent = name[0].toUpperCase();
+document.addEventListener('DOMContentLoaded', () => {
+  const inputEl = document.getElementById('chat-input');
+  
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
     }
-  }
-
-  fetchMarketsData();
+  });
+  
+  // Auto-resize textarea
+  inputEl.addEventListener('input', () => {
+    inputEl.style.height = 'auto';
+    inputEl.style.height = (inputEl.scrollHeight) + 'px';
+  });
 });
 
-// Workspace Tab Switcher (100% Functional Sidebar!)
-function switchTab(tabId) {
-  // Update Active Class on Sidebar Nav Items
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  const activeNav = document.getElementById(`nav-${tabId}`);
-  if (activeNav) activeNav.classList.add('active');
+async function sendMessage() {
+  const inputEl = document.getElementById('chat-input');
+  const text = inputEl.value.trim();
+  if (!text) return;
 
-  // Hide All Views
-  const views = ['chat', 'library', 'markets', 'science', 'agents'];
-  views.forEach(v => {
-    const el = document.getElementById(`tab-content-${v}`);
-    if (el) el.classList.add('hidden');
-  });
+  // Clear input
+  inputEl.value = '';
+  inputEl.style.height = 'auto';
 
-  // Show Selected View
-  const target = document.getElementById(`tab-content-${tabId}`);
-  if (target) {
-    target.classList.remove('hidden');
-  }
+  // Add User Message
+  appendMessage('user', text);
+  messages.push({ role: 'user', content: text });
 
-  // Update Header Title
-  const headerTitle = document.getElementById('headerTitle');
-  if (headerTitle) {
-    const titles = {
-      chat: 'Chat Studio',
-      library: 'My Library',
-      markets: 'Market Intelligence',
-      science: 'Scientific Research',
-      agents: 'AI Agents'
-    };
-    headerTitle.textContent = titles[tabId] || 'Studio';
-  }
-
-  if (tabId === 'markets') {
-    fetchMarketsData();
-  }
-}
-
-// Fetch Real Live Markets Data
-async function fetchMarketsData() {
-  try {
-    const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true");
-    const data = await res.json();
-
-    if (data.bitcoin) {
-      const btcPriceEl = document.getElementById('mkt-btc-price');
-      const btcChangeEl = document.getElementById('mkt-btc-change');
-
-      if (btcPriceEl) btcPriceEl.textContent = '$' + data.bitcoin.usd.toLocaleString();
-      if (btcChangeEl) {
-        const change = data.bitcoin.usd_24h_change;
-        btcChangeEl.textContent = (change >= 0 ? '▲ +' : '▼ ') + Math.abs(change).toFixed(2) + '% (24h)';
-        btcChangeEl.className = 'market-change ' + (change >= 0 ? 'change-up' : 'change-down');
-      }
-    }
-
-    if (data.ethereum) {
-      const ethPriceEl = document.getElementById('mkt-eth-price');
-      const ethChangeEl = document.getElementById('mkt-eth-change');
-
-      if (ethPriceEl) ethPriceEl.textContent = '$' + data.ethereum.usd.toLocaleString();
-      if (ethChangeEl) {
-        const change = data.ethereum.usd_24h_change;
-        ethChangeEl.textContent = (change >= 0 ? '▲ +' : '▼ ') + Math.abs(change).toFixed(2) + '% (24h)';
-        ethChangeEl.className = 'market-change ' + (change >= 0 ? 'change-up' : 'change-down');
-      }
-    }
-  } catch (e) {
-    console.log("Crypto market fetch error:", e);
-  }
+  // Add empty AI Message with typing cursor
+  const aiMsgEl = appendMessage('riya', '');
+  let fullAiResponse = '';
 
   try {
-    const forexRes = await fetch("https://open.er-api.com/v6/latest/USD");
-    const forexData = await forexRes.json();
-    if (forexData.rates?.INR) {
-      const inrPriceEl = document.getElementById('mkt-inr-price');
-      if (inrPriceEl) inrPriceEl.textContent = '₹' + forexData.rates.INR.toFixed(2);
+    const response = await fetch(`${BACKEND_URL}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: messages,
+        userName: 'Sir',
+        plan: 'elite',
+        stream: true
+      })
+    });
+
+    const contentType = response.headers.get('content-type') || '';
+
+    if (contentType.includes('text/event-stream')) {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ') && !line.includes('[DONE]')) {
+            try {
+              const parsed = JSON.parse(line.slice(6));
+              if (parsed.token) {
+                fullAiResponse += parsed.token;
+                aiMsgEl.innerHTML = formatMarkdown(fullAiResponse) + '<span class="typing-cursor"></span>';
+                scrollToBottom();
+              }
+            } catch (e) {}
+          }
+        }
+      }
+    } else {
+      const json = await response.json();
+      fullAiResponse = json.reply || json.response || "No response received.";
     }
-  } catch (e) {}
+  } catch (error) {
+    fullAiResponse = "Connection established, but the neural link is warming up. Please retry in a moment.";
+  }
+
+  // Finalize UI
+  aiMsgEl.innerHTML = formatMarkdown(fullAiResponse);
+  messages.push({ role: 'assistant', content: fullAiResponse });
+  scrollToBottom();
 }
 
-// Modal Controllers
-function toggleSettingsModal() {
-  const modal = document.getElementById('settingsModal');
-  if (modal) modal.classList.toggle('hidden');
+function appendMessage(role, text) {
+  const feed = document.getElementById('chat-feed');
+  
+  const msgDiv = document.createElement('div');
+  msgDiv.className = `message msg-${role}`;
+  
+  if (role === 'riya' && text === '') {
+    msgDiv.innerHTML = '<span class="typing-cursor"></span>';
+  } else {
+    msgDiv.innerHTML = formatMarkdown(text);
+  }
+  
+  feed.appendChild(msgDiv);
+  scrollToBottom();
+  
+  return msgDiv;
 }
 
-function toggleProfileModal() {
-  const name = typeof userName !== 'undefined' ? userName : 'Developer';
-  const plan = typeof userPlan !== 'undefined' ? userPlan : 'free';
+function scrollToBottom() {
+  const feed = document.getElementById('chat-feed');
+  feed.scrollTop = feed.scrollHeight;
+}
 
-  const pName = document.getElementById('profileModalName');
-  const pPlan = document.getElementById('profileModalPlan');
-
-  if (pName) pName.textContent = name;
-  if (pPlan) pPlan.textContent = `${plan.toUpperCase()} MEMBERSHIP`;
-
-  const modal = document.getElementById('profileModal');
-  if (modal) modal.classList.toggle('hidden');
+function formatMarkdown(text) {
+  if (!text) return '';
+  let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  
+  html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  html = html.replace(/\n/g, '<br/>');
+  
+  return html;
 }
