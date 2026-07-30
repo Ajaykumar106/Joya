@@ -3,19 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>FRIDAY Protocol</title>
+  <title>Riya</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-  <div class="void-container">
-    <div id="orb" class="orb state-idle">
-      <div class="ring"></div>
-      <div class="core"></div>
+  <div class="container">
+    <div class="header">
+      <div id="orb" class="orb state-idle">
+        <div class="ring"></div>
+        <div class="core"></div>
+      </div>
+      <div id="status-text" class="status-text">ONLINE</div>
     </div>
-    
-    <div id="status-text" class="status-text">TAP TO WAKE</div>
-    <div id="subtitle" class="subtitle"></div>
+
+    <div id="chat-feed" class="chat-feed">
+      <!-- Conversation history will appear here -->
+    </div>
+
+    <div class="input-area">
+      <textarea id="chat-input" placeholder="Message Riya or use voice..." rows="1" autofocus></textarea>
+      <button id="mic-btn" class="mic-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+          <line x1="12" y1="19" x2="12" y2="22"></line>
+        </svg>
+      </button>
+    </div>
   </div>
 
   <script src="js/app.js"></script>
