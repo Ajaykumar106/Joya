@@ -3,24 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Riya</title>
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-  
+  <title>FRIDAY Protocol</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-  <div class="container">
-    <div id="chat-feed" class="chat-feed">
-      <!-- Conversation history will appear here -->
+  <div class="void-container">
+    <div id="orb" class="orb state-idle">
+      <div class="ring"></div>
+      <div class="core"></div>
     </div>
-
-    <div class="input-area">
-      <textarea id="chat-input" placeholder="Message Riya..." rows="1" autofocus></textarea>
-    </div>
+    
+    <div id="status-text" class="status-text">TAP TO WAKE</div>
+    <div id="subtitle" class="subtitle"></div>
   </div>
 
   <script src="js/app.js"></script>
