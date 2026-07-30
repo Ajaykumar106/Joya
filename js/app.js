@@ -7,35 +7,14 @@ const statusText = document.getElementById('status-text');
 const chatFeed = document.getElementById('chat-feed');
 const inputEl = document.getElementById('chat-input');
 const micBtn = document.getElementById('mic-btn');
-const sysBoot = document.getElementById('sys-boot');
-const bootLog = document.getElementById('boot-log');
 
 let recognition;
 let isListening = false;
 let currentAudio = null;
 
-// ── SYSTEM BOOT SEQUENCE ──
 document.addEventListener('DOMContentLoaded', () => {
   initSpeechRecognition();
-  
-  // Fake boot sequence on click
-  sysBoot.addEventListener('click', () => {
-    bootLog.innerHTML += '> AUTHENTICATION OVERRIDE ACCEPTED.<br>> WELCOME COMMANDER.<br>';
-    setTimeout(() => {
-      sysBoot.classList.add('hidden');
-      inputEl.focus();
-    }, 500);
-  });
-  
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !sysBoot.classList.contains('hidden')) {
-      bootLog.innerHTML += '> AUTHENTICATION OVERRIDE ACCEPTED.<br>> WELCOME COMMANDER.<br>';
-      setTimeout(() => {
-        sysBoot.classList.add('hidden');
-        inputEl.focus();
-      }, 500);
-    }
-  });
+  inputEl.focus();
 });
 
 // Initialize Speech Recognition
@@ -48,7 +27,7 @@ function initSpeechRecognition() {
   }
   
   recognition = new SpeechRecognition();
-  recognition.lang = 'en-US'; // Switched to US for Pentagon vibe
+  recognition.lang = 'en-US';
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
 
@@ -56,7 +35,6 @@ function initSpeechRecognition() {
     isListening = true;
     setOrbState('listening');
     statusText.innerText = "LISTENING";
-    statusText.className = "text-cyan blink";
     micBtn.classList.add('active');
   };
 
@@ -70,7 +48,6 @@ function initSpeechRecognition() {
     console.error("Speech error", event.error);
     setOrbState('idle');
     statusText.innerText = "ONLINE";
-    statusText.className = "text-green blink";
     isListening = false;
     micBtn.classList.remove('active');
   };
@@ -83,7 +60,7 @@ function initSpeechRecognition() {
 
 // Manage Orb States
 function setOrbState(state) {
-  orb.className = `tactical-orb state-${state}`;
+  orb.className = `orb-core state-${state}`;
 }
 
 // Interactions
@@ -121,7 +98,6 @@ async function sendTextMessage() {
   let fullAiResponse = '';
   setOrbState('thinking');
   statusText.innerText = "PROCESSING";
-  statusText.className = "text-red blink";
 
   let typeQueue = "";
   let currentRenderedText = "";
@@ -149,7 +125,7 @@ async function sendTextMessage() {
     const response = await fetch(`${BACKEND_URL}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages, userName: 'Commander', stream: true })
+      body: JSON.stringify({ messages, userName: 'Sir', stream: true })
     });
 
     const contentType = response.headers.get('content-type') || '';
@@ -182,12 +158,12 @@ async function sendTextMessage() {
       }
     } else {
       const json = await response.json();
-      fullAiResponse = json.reply || "ERROR: NO RESPONSE RECEIVED.";
+      fullAiResponse = json.reply || "ERROR: CONNECTION INTERRUPTED.";
       typeQueue += fullAiResponse;
       if (!isTyping) processTypeQueue();
     }
   } catch (error) {
-    fullAiResponse = "ERROR: UPLINK FAILED. CHECK SYSTEM ENCRYPTION KEYS.";
+    fullAiResponse = "ERROR: UPLINK FAILED.";
     typeQueue += fullAiResponse;
     if (!isTyping) processTypeQueue();
   }
@@ -200,7 +176,6 @@ async function sendTextMessage() {
       scrollToBottom();
       setOrbState('idle');
       statusText.innerText = "ONLINE";
-      statusText.className = "text-green blink";
     }
   }, 100);
 }
@@ -217,23 +192,21 @@ async function sendVoiceMessage(text) {
   let replyText = '';
   setOrbState('thinking');
   statusText.innerText = "PROCESSING";
-  statusText.className = "text-red blink";
   aiMsgEl.innerHTML = '<span class="typing-cursor"></span>';
 
   try {
     const chatRes = await fetch(`${BACKEND_URL}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages, userName: 'Commander', stream: false })
+      body: JSON.stringify({ messages, userName: 'Sir', stream: false })
     });
     const chatData = await chatRes.json();
-    replyText = chatData.reply || "ERROR: API CONNECTION FAILED.";
+    replyText = chatData.reply || "ERROR: CONNECTION INTERRUPTED.";
     
     messages.push({ role: 'assistant', content: replyText });
     aiMsgEl.innerHTML = formatMarkdown(replyText);
     scrollToBottom();
 
-    // Text to Speech
     statusText.innerText = "SYNTHESIZING";
     const speakRes = await fetch(`${BACKEND_URL}/api/speak`, {
       method: 'POST',
@@ -249,25 +222,22 @@ async function sendVoiceMessage(text) {
     currentAudio.onplay = () => {
       setOrbState('speaking');
       statusText.innerText = "TRANSMITTING";
-      statusText.className = "text-cyan blink";
     };
     
     currentAudio.onended = () => {
       setOrbState('idle');
       statusText.innerText = "ONLINE";
-      statusText.className = "text-green blink";
     };
 
     currentAudio.play();
   } catch (error) {
     console.error(error);
     if (!replyText) {
-      replyText = "ERROR: SYSTEM WARMING UP. RETRY COMMAND.";
+      replyText = "ERROR: SYSTEM WARMING UP. RETRY.";
       aiMsgEl.innerHTML = formatMarkdown(replyText);
     }
     setOrbState('idle');
     statusText.innerText = "ONLINE";
-    statusText.className = "text-green blink";
   }
 }
 
