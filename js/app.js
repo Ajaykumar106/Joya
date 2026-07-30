@@ -7,10 +7,36 @@ const statusText = document.getElementById('status-text');
 const chatFeed = document.getElementById('chat-feed');
 const inputEl = document.getElementById('chat-input');
 const micBtn = document.getElementById('mic-btn');
+const sysBoot = document.getElementById('sys-boot');
+const bootLog = document.getElementById('boot-log');
 
 let recognition;
 let isListening = false;
 let currentAudio = null;
+
+// ── SYSTEM BOOT SEQUENCE ──
+document.addEventListener('DOMContentLoaded', () => {
+  initSpeechRecognition();
+  
+  // Fake boot sequence on click
+  sysBoot.addEventListener('click', () => {
+    bootLog.innerHTML += '> AUTHENTICATION OVERRIDE ACCEPTED.<br>> WELCOME COMMANDER.<br>';
+    setTimeout(() => {
+      sysBoot.classList.add('hidden');
+      inputEl.focus();
+    }, 500);
+  });
+  
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !sysBoot.classList.contains('hidden')) {
+      bootLog.innerHTML += '> AUTHENTICATION OVERRIDE ACCEPTED.<br>> WELCOME COMMANDER.<br>';
+      setTimeout(() => {
+        sysBoot.classList.add('hidden');
+        inputEl.focus();
+      }, 500);
+    }
+  });
+});
 
 // Initialize Speech Recognition
 function initSpeechRecognition() {
@@ -22,7 +48,7 @@ function initSpeechRecognition() {
   }
   
   recognition = new SpeechRecognition();
-  recognition.lang = 'en-IN';
+  recognition.lang = 'en-US'; // Switched to US for Pentagon vibe
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
 
@@ -30,6 +56,7 @@ function initSpeechRecognition() {
     isListening = true;
     setOrbState('listening');
     statusText.innerText = "LISTENING";
+    statusText.className = "text-cyan blink";
     micBtn.classList.add('active');
   };
 
@@ -43,6 +70,7 @@ function initSpeechRecognition() {
     console.error("Speech error", event.error);
     setOrbState('idle');
     statusText.innerText = "ONLINE";
+    statusText.className = "text-green blink";
     isListening = false;
     micBtn.classList.remove('active');
   };
@@ -55,7 +83,7 @@ function initSpeechRecognition() {
 
 // Manage Orb States
 function setOrbState(state) {
-  orb.className = `orb state-${state}`;
+  orb.className = `tactical-orb state-${state}`;
 }
 
 // Interactions
@@ -79,18 +107,12 @@ inputEl.addEventListener('keydown', (e) => {
   }
 });
 
-inputEl.addEventListener('input', () => {
-  inputEl.style.height = 'auto';
-  inputEl.style.height = (inputEl.scrollHeight) + 'px';
-});
-
 // TEXT CHAT (Streaming + Typewriter Queue)
 async function sendTextMessage() {
   const text = inputEl.value.trim();
   if (!text) return;
 
   inputEl.value = '';
-  inputEl.style.height = 'auto';
 
   appendMessage('user', text);
   messages.push({ role: 'user', content: text });
@@ -98,9 +120,9 @@ async function sendTextMessage() {
   const aiMsgEl = appendMessage('riya', '');
   let fullAiResponse = '';
   setOrbState('thinking');
-  statusText.innerText = "THINKING";
+  statusText.innerText = "PROCESSING";
+  statusText.className = "text-red blink";
 
-  // Typing Queue System for fast APIs (like Groq)
   let typeQueue = "";
   let currentRenderedText = "";
   let isTyping = false;
@@ -117,7 +139,7 @@ async function sendTextMessage() {
       aiMsgEl.innerHTML = formatMarkdown(currentRenderedText) + '<span class="typing-cursor"></span>';
       scrollToBottom();
       
-      setTimeout(processTypeQueue, 25);
+      setTimeout(processTypeQueue, 20);
     } else {
       isTyping = false;
     }
@@ -127,7 +149,7 @@ async function sendTextMessage() {
     const response = await fetch(`${BACKEND_URL}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages, userName: 'Sir', stream: true })
+      body: JSON.stringify({ messages, userName: 'Commander', stream: true })
     });
 
     const contentType = response.headers.get('content-type') || '';
@@ -160,12 +182,12 @@ async function sendTextMessage() {
       }
     } else {
       const json = await response.json();
-      fullAiResponse = json.reply || "No response received.";
+      fullAiResponse = json.reply || "ERROR: NO RESPONSE RECEIVED.";
       typeQueue += fullAiResponse;
       if (!isTyping) processTypeQueue();
     }
   } catch (error) {
-    fullAiResponse = "Connection established, but the neural link is warming up. Try again in a moment.";
+    fullAiResponse = "ERROR: UPLINK FAILED. CHECK SYSTEM ENCRYPTION KEYS.";
     typeQueue += fullAiResponse;
     if (!isTyping) processTypeQueue();
   }
@@ -178,6 +200,7 @@ async function sendTextMessage() {
       scrollToBottom();
       setOrbState('idle');
       statusText.innerText = "ONLINE";
+      statusText.className = "text-green blink";
     }
   }, 100);
 }
@@ -194,16 +217,17 @@ async function sendVoiceMessage(text) {
   let replyText = '';
   setOrbState('thinking');
   statusText.innerText = "PROCESSING";
+  statusText.className = "text-red blink";
   aiMsgEl.innerHTML = '<span class="typing-cursor"></span>';
 
   try {
     const chatRes = await fetch(`${BACKEND_URL}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages, userName: 'Sir', stream: false })
+      body: JSON.stringify({ messages, userName: 'Commander', stream: false })
     });
     const chatData = await chatRes.json();
-    replyText = chatData.reply || "Connection issue with Groq/Gemini. Check API keys.";
+    replyText = chatData.reply || "ERROR: API CONNECTION FAILED.";
     
     messages.push({ role: 'assistant', content: replyText });
     aiMsgEl.innerHTML = formatMarkdown(replyText);
@@ -224,23 +248,26 @@ async function sendVoiceMessage(text) {
     
     currentAudio.onplay = () => {
       setOrbState('speaking');
-      statusText.innerText = "SPEAKING";
+      statusText.innerText = "TRANSMITTING";
+      statusText.className = "text-cyan blink";
     };
     
     currentAudio.onended = () => {
       setOrbState('idle');
       statusText.innerText = "ONLINE";
+      statusText.className = "text-green blink";
     };
 
     currentAudio.play();
   } catch (error) {
     console.error(error);
     if (!replyText) {
-      replyText = "Connection issue. Backend warming up.";
+      replyText = "ERROR: SYSTEM WARMING UP. RETRY COMMAND.";
       aiMsgEl.innerHTML = formatMarkdown(replyText);
     }
     setOrbState('idle');
     statusText.innerText = "ONLINE";
+    statusText.className = "text-green blink";
   }
 }
 
@@ -272,6 +299,3 @@ function formatMarkdown(text) {
   html = html.replace(/\n/g, '<br/>');
   return html;
 }
-
-// Init
-document.addEventListener('DOMContentLoaded', initSpeechRecognition);
