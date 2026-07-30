@@ -6,102 +6,74 @@ import * as THREE from "three";
 
 export default function ParticleFlow() {
   const pointsRef = useRef<THREE.Points>(null!);
-  const count = 20000;
+  const count = 15000;
 
-  // 16 radial energy channels converging straight into the Arc Reactor core
-  const energyChannels = useMemo(() => {
-    const channels = [];
-    const num = 16;
-    for (let i = 0; i < num; i++) {
-      const angle = (i / num) * Math.PI * 2;
-      const dist = 16 + Math.random() * 8;
-      const startX = Math.cos(angle) * dist;
-      const startY = Math.sin(angle) * dist;
-      const startZ = (Math.random() - 0.5) * 8;
-
-      // Curved spiral control point feeding energy into center
-      const ctrlAngle = angle + 0.4;
-      const ctrlDist = dist * 0.5;
-      const ctrlX = Math.cos(ctrlAngle) * ctrlDist;
-      const ctrlY = Math.sin(ctrlAngle) * ctrlDist;
-      const ctrlZ = (Math.random() - 0.5) * 4;
-
-      channels.push({ startX, startY, startZ, ctrlX, ctrlY, ctrlZ });
-    }
-    return channels;
-  }, []);
-
-  const { positions, particleMeta, colors } = useMemo(() => {
+  // Initialize particles in a smooth fluid water stream passing through the center
+  const { positions, initialData, colors } = useMemo(() => {
     const pos = new Float32Array(count * 3);
-    const meta = new Float32Array(count * 4); // [channel, progress(1->0), speed, offsetR]
+    const data = new Float32Array(count * 4); // [yPos, phase, radius, speed]
     const col = new Float32Array(count * 3);
 
-    const cCyan = new THREE.Color("#00e5ff");  // Electric Cyan
-    const cBlue = new THREE.Color("#0088ff");  // Arc Blue
-    const cSky = new THREE.Color("#38bdf8");   // Sky Blue
-    const cWhite = new THREE.Color("#ffffff"); // Energy Flash White
+    const cCyan = new THREE.Color("#00e5ff");
+    const cBlue = new THREE.Color("#38bdf8");
+    const cWater = new THREE.Color("#0088ff");
+    const cWhite = new THREE.Color("#ffffff");
 
     for (let i = 0; i < count; i++) {
-      const chIdx = i % energyChannels.length;
-      const progress = Math.random(); // 1.0 = outer edge, 0.0 = Arc Core center
-      const speed = 0.35 + Math.random() * 0.55;
-      const offsetR = Math.random() * 0.4;
+      const y = (Math.random() - 0.5) * 18; // Flow vertically from top to bottom through the core
+      const phase = Math.random() * Math.PI * 2;
+      const radius = Math.random() * 2.2; // Constrained around the center column like a water pipe/river
+      const speed = 0.4 + Math.random() * 0.6;
 
-      meta[i * 4] = chIdx;
-      meta[i * 4 + 1] = progress;
-      meta[i * 4 + 2] = speed;
-      meta[i * 4 + 3] = offsetR;
+      data[i * 4] = y;
+      data[i * 4 + 1] = phase;
+      data[i * 4 + 2] = radius;
+      data[i * 4 + 3] = speed;
+
+      pos[i * 3] = Math.sin(y * 0.5 + phase) * radius;
+      pos[i * 3 + 1] = y;
+      pos[i * 3 + 2] = Math.cos(y * 0.5 + phase) * (radius * 0.6);
 
       const rand = Math.random();
-      const colorChoice = rand > 0.75 ? cWhite : rand > 0.45 ? cCyan : rand > 0.2 ? cBlue : cSky;
-      col[i * 3] = colorChoice.r;
-      col[i * 3 + 1] = colorChoice.g;
-      col[i * 3 + 2] = colorChoice.b;
+      const chosenColor = rand > 0.8 ? cWhite : rand > 0.45 ? cCyan : rand > 0.2 ? cBlue : cWater;
+      col[i * 3] = chosenColor.r;
+      col[i * 3 + 1] = chosenColor.g;
+      col[i * 3 + 2] = chosenColor.b;
     }
 
-    return { positions: pos, particleMeta: meta, colors: col };
-  }, [count, energyChannels]);
+    return { positions: pos, initialData: data, colors: col };
+  }, [count]);
 
   useFrame((state, delta) => {
     if (!pointsRef.current) return;
     const geo = pointsRef.current.geometry;
     const posAttr = geo.attributes.position;
     const posArr = posAttr.array as Float32Array;
+    const time = state.clock.elapsedTime;
 
     for (let i = 0; i < count; i++) {
-      const chIdx = Math.floor(particleMeta[i * 4]);
-      let progress = particleMeta[i * 4 + 1];
-      const speed = particleMeta[i * 4 + 2];
-      const offsetR = particleMeta[i * 4 + 3];
+      let y = initialData[i * 4];
+      const phase = initialData[i * 4 + 1];
+      const radius = initialData[i * 4 + 2];
+      const speed = initialData[i * 4 + 3];
 
-      const ch = energyChannels[chIdx];
-
-      // Acceleration as particles plunge into the Arc Core to give it energy
-      const accel = 0.3 + (1.0 - progress) * 2.2;
-      progress -= delta * speed * accel;
-
-      // Re-spawn at outer bounds when absorbed into the core
-      if (progress <= 0.02) {
-        progress = 1.0;
+      // Smooth liquid water flow downwards through the center core
+      y -= delta * speed * 3.5;
+      if (y < -9) {
+        y = 9; // Reset to top
       }
-      particleMeta[i * 4 + 1] = progress;
+      initialData[i * 4] = y;
 
-      // Quadratic Bezier interpolation into (0,0,0)
-      const t = progress;
-      const mt = 1 - t;
+      // Gentle fluid wave equation (smooth water ripple effect)
+      const waveX = Math.sin(y * 0.6 + time * 1.5 + phase) * (radius * 0.8);
+      const waveZ = Math.cos(y * 0.6 + time * 1.5 + phase) * (radius * 0.5);
 
-      const px = t * t * ch.startX + 2 * t * mt * ch.ctrlX;
-      const py = t * t * ch.startY + 2 * t * mt * ch.ctrlY;
-      const pz = t * t * ch.startZ + 2 * t * mt * ch.ctrlZ;
+      // Pinch slightly at the central core (y = 0) like fluid funneling into the reactor
+      const funnel = 1.0 - Math.exp(-y * y * 0.15) * 0.45;
 
-      // Spiral swirl effect as particles feed into the core
-      const swirl = progress * 12 + i;
-      const jx = Math.cos(swirl) * offsetR * progress;
-      const jy = Math.sin(swirl) * offsetR * progress;
-
-      posArr[i * 3] = px + jx;
-      posArr[i * 3 + 1] = py + jy;
-      posArr[i * 3 + 2] = pz;
+      posArr[i * 3] = waveX * funnel;
+      posArr[i * 3 + 1] = y;
+      posArr[i * 3 + 2] = waveZ * funnel;
     }
 
     posAttr.needsUpdate = true;
@@ -129,7 +101,7 @@ export default function ParticleFlow() {
         size={0.065}
         vertexColors
         transparent
-        opacity={0.92}
+        opacity={0.85}
         blending={THREE.AdditiveBlending}
         depthWrite={false}
       />
