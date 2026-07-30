@@ -37,6 +37,30 @@ async function sendMessage() {
   // Add empty AI Message with typing cursor
   const aiMsgEl = appendMessage('riya', '');
   let fullAiResponse = '';
+  
+  // Typing Queue System for fast APIs (like Groq)
+  let typeQueue = "";
+  let currentRenderedText = "";
+  let isTyping = false;
+
+  function processTypeQueue() {
+    if (typeQueue.length > 0) {
+      isTyping = true;
+      // Take a few characters at a time depending on queue size to maintain smooth but readable speed
+      let chunkSize = Math.max(1, Math.floor(typeQueue.length / 15)); 
+      chunkSize = Math.min(chunkSize, 4); // Max 4 chars per frame for natural reading speed
+      
+      currentRenderedText += typeQueue.substring(0, chunkSize);
+      typeQueue = typeQueue.substring(chunkSize);
+      
+      aiMsgEl.innerHTML = formatMarkdown(currentRenderedText) + '<span class="typing-cursor"></span>';
+      scrollToBottom();
+      
+      setTimeout(processTypeQueue, 25); // 25ms delay per tick
+    } else {
+      isTyping = false;
+    }
+  }
 
   try {
     const response = await fetch(`${BACKEND_URL}/api/chat`, {
@@ -69,8 +93,10 @@ async function sendMessage() {
               const parsed = JSON.parse(line.slice(6));
               if (parsed.token) {
                 fullAiResponse += parsed.token;
-                aiMsgEl.innerHTML = formatMarkdown(fullAiResponse) + '<span class="typing-cursor"></span>';
-                scrollToBottom();
+                typeQueue += parsed.token;
+                if (!isTyping) {
+                  processTypeQueue();
+                }
               }
             } catch (e) {}
           }
@@ -79,15 +105,24 @@ async function sendMessage() {
     } else {
       const json = await response.json();
       fullAiResponse = json.reply || json.response || "No response received.";
+      typeQueue += fullAiResponse;
+      if (!isTyping) processTypeQueue();
     }
   } catch (error) {
     fullAiResponse = "Connection established, but the neural link is warming up. Please retry in a moment.";
+    typeQueue += fullAiResponse;
+    if (!isTyping) processTypeQueue();
   }
 
-  // Finalize UI
-  aiMsgEl.innerHTML = formatMarkdown(fullAiResponse);
-  messages.push({ role: 'assistant', content: fullAiResponse });
-  scrollToBottom();
+  // Wait for typing queue to finish before finalizing
+  const checkTypingInterval = setInterval(() => {
+    if (!isTyping && typeQueue.length === 0) {
+      clearInterval(checkTypingInterval);
+      aiMsgEl.innerHTML = formatMarkdown(fullAiResponse);
+      messages.push({ role: 'assistant', content: fullAiResponse });
+      scrollToBottom();
+    }
+  }, 100);
 }
 
 function appendMessage(role, text) {
