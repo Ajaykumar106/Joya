@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, Shield, Command, Menu, Plus, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
-export default function HUDOverlay() {
+export default function HUDOverlay({ onToggleView }: { onToggleView?: () => void }) {
   const [input, setInput] = useState("");
   const [chatLog, setChatLog] = useState<{ role: string; content: string }[]>([
     { role: "assistant", content: "SYSTEMS ONLINE. HOW CAN I HELP YOU, BOSS?" }
