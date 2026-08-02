@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { Float, MeshTransmissionMaterial } from "@react-three/drei";
@@ -10,31 +10,65 @@ export default function Core3D() {
   const midRingRef = useRef<THREE.Group>(null);
   const innerGroupRef = useRef<THREE.Group>(null);
   const coreRef = useRef<THREE.Mesh>(null);
+  const statusRef = useRef<'idle' | 'listening' | 'speaking'>('idle');
+
+  useEffect(() => {
+    const handleStatus = (e: any) => {
+      statusRef.current = e.detail;
+    };
+    window.addEventListener('core-status', handleStatus);
+    return () => window.removeEventListener('core-status', handleStatus);
+  }, []);
 
   useFrame((state, delta) => {
+    const status = statusRef.current;
+    
+    // Adjust speeds based on status
+    const speedMult = status === 'listening' ? 1.5 : status === 'speaking' ? 2.5 : 1;
+
     if (outerRingRef.current) {
-      outerRingRef.current.rotation.z -= delta * 0.15;
+      outerRingRef.current.rotation.z -= delta * 0.15 * speedMult;
     }
     if (midRingRef.current) {
-      midRingRef.current.rotation.z += delta * 0.3;
+      midRingRef.current.rotation.z += delta * 0.3 * speedMult;
       midRingRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.5) * 0.2;
     }
     if (innerGroupRef.current) {
-      innerGroupRef.current.rotation.z -= delta * 1.2;
+      innerGroupRef.current.rotation.z -= delta * 1.2 * speedMult;
       innerGroupRef.current.rotation.y = Math.cos(state.clock.elapsedTime * 0.8) * 0.3;
     }
+    
     if (coreRef.current) {
       const material = coreRef.current.material as THREE.MeshStandardMaterial;
-      // Heartbeat rhythm math
-      const t = state.clock.elapsedTime % 1.5; // 1.5 second loop
-      let pulse = 0;
-      if (t < 0.15) {
-        pulse = Math.sin((t / 0.15) * Math.PI); // First beat
-      } else if (t > 0.25 && t < 0.4) {
-        pulse = Math.sin(((t - 0.25) / 0.15) * Math.PI); // Second beat
-      }
+      const t = state.clock.elapsedTime;
       
-      material.emissiveIntensity = 2 + pulse * 8; // Base glow 2, pulses up to 10
+      let targetIntensity = 2;
+      let targetColor = 0x0044ff; // Deep blue base
+
+      if (status === 'idle') {
+        // Heartbeat rhythm
+        const ht = t % 1.5;
+        let pulse = 0;
+        if (ht < 0.15) {
+          pulse = Math.sin((ht / 0.15) * Math.PI);
+        } else if (ht > 0.25 && ht < 0.4) {
+          pulse = Math.sin(((ht - 0.25) / 0.15) * Math.PI);
+        }
+        targetIntensity = 2 + pulse * 10;
+        targetColor = 0x0044ff; // Blue
+      } else if (status === 'listening') {
+        // Steady intense glow
+        targetIntensity = 10 + Math.sin(t * 5) * 3;
+        targetColor = 0x00aaff; // Bright Cyan while listening
+      } else if (status === 'speaking') {
+        // Chaotic waveform pulse
+        const voicePulse = Math.sin(t * 18) * 0.5 + Math.sin(t * 30) * 0.5;
+        targetIntensity = 6 + Math.abs(voicePulse) * 12;
+        targetColor = 0x0022ff; // Very deep intense blue
+      }
+
+      material.emissiveIntensity = THREE.MathUtils.lerp(material.emissiveIntensity, targetIntensity, 0.1);
+      material.emissive.lerp(new THREE.Color(targetColor), 0.1);
     }
   });
 
@@ -46,7 +80,7 @@ export default function Core3D() {
           <sphereGeometry args={[1.2, 64, 64]} />
           <meshStandardMaterial
             color="#ffffff"
-            emissive="#0066ff"
+            emissive="#0044ff"
             emissiveIntensity={8}
             toneMapped={false}
           />
@@ -62,7 +96,7 @@ export default function Core3D() {
             transmission={1}
             ior={1.5}
             chromaticAberration={0.4}
-            color="#0088ff"
+            color="#0066ff"
           />
         </mesh>
       </Float>
@@ -73,7 +107,7 @@ export default function Core3D() {
           <torusGeometry args={[1.8, 0.1, 16, 64]} />
           <meshStandardMaterial
             color="#001133"
-            emissive="#0044ff"
+            emissive="#0033ee"
             emissiveIntensity={2}
             toneMapped={false}
             wireframe
@@ -83,7 +117,7 @@ export default function Core3D() {
         {Array.from({ length: 12 }).map((_, i) => (
           <mesh key={i} rotation={[0, 0, (i * Math.PI) / 6]} position={[0, 0, 0]}>
             <cylinderGeometry args={[0.02, 0.02, 3.6, 8]} />
-            <meshStandardMaterial color="#00aaff" emissive="#0088ff" emissiveIntensity={1} toneMapped={false} />
+            <meshStandardMaterial color="#0088ff" emissive="#0055ff" emissiveIntensity={1} toneMapped={false} />
           </mesh>
         ))}
       </group>
@@ -93,7 +127,7 @@ export default function Core3D() {
         <mesh rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[2.8, 0.15, 32, 100]} />
           <meshStandardMaterial
-            color="#002244"
+            color="#001133"
             roughness={0.2}
             metalness={0.8}
           />
@@ -102,8 +136,8 @@ export default function Core3D() {
         <mesh rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[2.8, 0.16, 8, 64]} />
           <meshStandardMaterial
-            color="#00aaff"
-            emissive="#0066ff"
+            color="#0088ff"
+            emissive="#0044ff"
             emissiveIntensity={2}
             toneMapped={false}
             wireframe
@@ -116,8 +150,8 @@ export default function Core3D() {
         <mesh rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[4.5, 0.02, 16, 128]} />
           <meshStandardMaterial
-            color="#0022ff"
-            emissive="#0011aa"
+            color="#0011ff"
+            emissive="#0000aa"
             emissiveIntensity={1.5}
             transparent
             opacity={0.8}
@@ -128,8 +162,8 @@ export default function Core3D() {
         <mesh rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[4.8, 0.01, 8, 200]} />
           <meshStandardMaterial
-            color="#0088ff"
-            emissive="#00aaff"
+            color="#0066ff"
+            emissive="#0088ff"
             emissiveIntensity={1}
             wireframe
             transparent
