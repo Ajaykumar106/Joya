@@ -15,8 +15,8 @@ const shareTechMono = Share_Tech_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Joya AI",
-  description: "Your intelligent AI assistant — powered by Joya Protocol",
+  title: "AURA-7 // CORE SYSTEM",
+  description: "Advanced Cinematic AI OS",
 };
 
 export default function RootLayout({

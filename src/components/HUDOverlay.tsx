@@ -250,9 +250,13 @@ export default function HUDOverlay({ onToggleView }: { onToggleView?: () => void
             {/* Subtle inner top highlight */}
             <div className="absolute top-0 left-10 right-10 h-[1px] bg-gradient-to-r from-transparent via-[#00aaff] to-transparent opacity-30"></div>
             
-            <div className="pl-2 md:pl-3">
-              <Command className="w-4 h-4 md:w-5 md:h-5 text-[#0088ff] opacity-80" />
-            </div>
+            <button 
+              onClick={() => document.getElementById('hidden-file-input')?.click()}
+              className="pl-2 md:pl-3 hover:opacity-100 transition-opacity cursor-pointer"
+            >
+              <Command className="w-4 h-4 md:w-5 md:h-5 text-[#0088ff] opacity-80 hover:text-white transition-colors" />
+            </button>
+            <input type="file" id="hidden-file-input" className="hidden" />
             
             <input 
               type="text" 
