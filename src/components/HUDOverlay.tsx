@@ -159,7 +159,7 @@ export default function HUDOverlay({ onToggleView }: { onToggleView?: () => void
             <div className="p-4 md:p-6 flex items-center justify-between border-b border-[rgba(0,136,255,0.1)]">
               <div className="flex items-center gap-3">
                 <Shield className="text-[#0088ff] w-4 h-4 md:w-5 md:h-5" />
-                <div className="text-[#0088ff] font-bold tracking-widest text-xs md:text-sm glow-text">RIYA CORE</div>
+                <div className="text-[#0088ff] font-bold tracking-widest text-xs md:text-sm glow-text">JOYA CORE</div>
               </div>
               <button 
                 onClick={() => setSidebarOpen(false)}
@@ -207,7 +207,7 @@ export default function HUDOverlay({ onToggleView }: { onToggleView?: () => void
                       {msg.role === 'user' ? (
                         <span className="text-[rgba(255,255,255,0.4)] font-mono text-[9px] md:text-[10px] tracking-widest uppercase">Boss</span>
                       ) : (
-                        <span className="text-[#0088ff] font-mono text-[9px] md:text-[10px] tracking-widest uppercase glow-text">Riya</span>
+                        <span className="text-[#0088ff] font-mono text-[9px] md:text-[10px] tracking-widest uppercase glow-text">Joya</span>
                       )}
                     </div>
                     <div 
@@ -230,7 +230,7 @@ export default function HUDOverlay({ onToggleView }: { onToggleView?: () => void
                   className="flex flex-col items-start w-full"
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[#0088ff] font-mono text-[9px] md:text-[10px] tracking-widest uppercase glow-text">Riya</span>
+                    <span className="text-[#0088ff] font-mono text-[9px] md:text-[10px] tracking-widest uppercase glow-text">Joya</span>
                   </div>
                   <div className="text-[13px] md:text-[15px] tracking-wide leading-relaxed px-4 py-2.5 md:px-5 md:py-3 rounded-2xl rounded-tl-sm bg-[rgba(0,10,30,0.6)] border border-[rgba(0,136,255,0.2)] text-[#0088ff] flex items-center gap-2 backdrop-blur-md">
                     <div className="w-1.5 h-1.5 bg-[#0088ff] rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
@@ -259,7 +259,7 @@ export default function HUDOverlay({ onToggleView }: { onToggleView?: () => void
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleCommand}
-              placeholder="Message Riya..."
+              placeholder="Message Joya..."
               className="flex-1 bg-transparent border-none outline-none text-white font-sans text-sm md:text-base px-3 py-2 md:px-4 md:py-3 placeholder:text-[rgba(255,255,255,0.3)]"
             />
             
