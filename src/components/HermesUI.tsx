@@ -54,7 +54,7 @@ function RotatingGlobe({ isActive, isLiveMode }: { isActive: boolean; isLiveMode
   });
 
   return (
-    <group position={isLiveMode ? [0, 0, 0] : [-2, 0.6, 0]} scale={isLiveMode ? [1.5, 1.5, 1.5] : [1, 1, 1]}>
+    <group position={isLiveMode ? [0, 0, 0] : [-3.5, 0, -2]} scale={isLiveMode ? [1.5, 1.5, 1.5] : [0.7, 0.7, 0.7]}>
       <mesh ref={glowRef}>
         <sphereGeometry args={[2.0, 32, 32]} />
         <meshBasicMaterial color="#88c0ff" transparent opacity={0.05} />
@@ -446,8 +446,8 @@ export default function HermesUI({
         </div>
 
         {/* Chat Messages */}
-        <div ref={scrollRef} className={`flex-1 overflow-y-auto no-scrollbar px-4 md:px-0 ${isLiveMode ? 'opacity-0 pointer-events-none hidden' : ''}`}>
-          <div className="max-w-2xl mx-auto flex flex-col gap-5 py-4 pb-6">
+        <div ref={scrollRef} className={`flex-1 overflow-y-auto no-scrollbar px-4 md:px-0 transition-opacity duration-500 ${isLiveMode ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+          <div className="max-w-4xl mx-auto flex flex-col gap-6 py-4 pb-12">
             {/* Welcome */}
             {messages.length === 0 && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.6 }}
@@ -472,26 +472,26 @@ export default function HermesUI({
             <AnimatePresence initial={false}>
               {messages.map((msg) => (
                 <motion.div key={msg.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
-                  className={`flex w-full ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                  className={`flex w-full ${msg.role === "user" ? "justify-end px-4 md:px-0" : "justify-start bg-[#0a1628]/40 border-y border-[#88c0ff]/5 py-6 px-4 md:px-8"}`}>
                   <div className={
                     msg.role === "user"
-                      ? "max-w-[80%] md:max-w-[70%] px-4 py-3 rounded-2xl rounded-br-md text-sm md:text-[15px] leading-relaxed bg-[#88c0ff]/15 border border-[#88c0ff]/25 text-white/90 backdrop-blur-xl shadow-lg"
-                      : "max-w-[90%] md:max-w-[80%] px-4 py-3 rounded-2xl rounded-bl-md text-sm md:text-[15px] leading-relaxed bg-[#0a1628]/70 border border-[#88c0ff]/15 text-[#d0e8ff] backdrop-blur-xl shadow-lg"
+                      ? "max-w-[85%] md:max-w-[70%] px-5 py-3.5 rounded-2xl rounded-br-md text-[15px] leading-relaxed bg-[#88c0ff]/15 border border-[#88c0ff]/25 text-white/90 backdrop-blur-xl shadow-lg"
+                      : "w-full max-w-4xl mx-auto text-[15px] leading-relaxed text-[#d0e8ff]"
                   }>
-                    <div className={`text-[10px] font-mono mb-1.5 ${msg.role === "user" ? "text-[#88c0ff]/50 text-right" : "text-[#88c0ff]/50"}`}>
-                      {msg.time}
+                    <div className={`text-[11px] font-mono mb-2 ${msg.role === "user" ? "text-[#88c0ff]/50 text-right" : "text-[#88c0ff]/50"}`}>
+                      {msg.role === "ai" ? "Joya • " : ""}{msg.time}
                     </div>
 
                     {/* Search Results Badge */}
                     {msg.searchResults && msg.searchResults.length > 0 && (
-                      <div className="mb-3 p-2 rounded-lg bg-[#88c0ff]/5 border border-[#88c0ff]/10 text-[11px]">
-                        <div className="flex items-center gap-1.5 text-[#88c0ff]/60 mb-1.5 font-mono">
-                          <Search className="w-3 h-3" /> Searched {msg.searchResults.length} sources
+                      <div className="mb-4 p-3 rounded-lg bg-[#88c0ff]/5 border border-[#88c0ff]/10 text-xs">
+                        <div className="flex items-center gap-2 text-[#88c0ff]/70 mb-2 font-mono font-medium">
+                          <Search className="w-3.5 h-3.5" /> Web Search ({msg.searchResults.length} sources)
                         </div>
-                        <div className="flex flex-wrap gap-1">
+                        <div className="flex flex-wrap gap-2">
                           {msg.searchResults.map((r, i) => (
                             <a key={i} href={r.url} target="_blank" rel="noopener noreferrer"
-                              className="px-2 py-0.5 rounded-full bg-[#88c0ff]/10 text-[#7dd3fc] hover:bg-[#88c0ff]/20 transition-colors truncate max-w-[200px]">
+                               className="px-2.5 py-1 rounded-md bg-[#88c0ff]/10 text-[#7dd3fc] hover:bg-[#88c0ff]/20 hover:text-white transition-colors truncate max-w-[250px] border border-[#88c0ff]/20">
                               {r.title}
                             </a>
                           ))}
@@ -500,26 +500,26 @@ export default function HermesUI({
                     )}
 
                     {/* Content */}
-                    <div className="prose-sm">
+                    <div className={msg.role === "ai" ? "prose-sm md:prose-base prose-invert max-w-none w-full" : "whitespace-pre-wrap break-words"}>
                       {msg.role === "ai" ? (
                         msg.isStreaming ? (
-                          <>{msg.content}<span className="animate-pulse text-[#88c0ff]">▊</span></>
+                          <>{msg.content}<span className="animate-pulse text-[#88c0ff] ml-1">▊</span></>
                         ) : (
                           <MarkdownContent content={msg.content} />
                         )
                       ) : (
-                        <div className="whitespace-pre-wrap break-words">{msg.content}</div>
+                        msg.content
                       )}
                     </div>
 
                     {/* Action buttons for AI */}
                     {msg.role === "ai" && !msg.isStreaming && msg.content && (
-                      <div className="flex items-center gap-3 mt-3 pt-2 border-t border-white/5">
-                        <button onClick={() => speakText(msg.content)} className="text-[10px] font-mono text-[#88c0ff]/40 hover:text-[#88c0ff] transition-colors flex items-center gap-1">
-                          <Volume2 className="w-3 h-3" /> Listen
+                      <div className="flex items-center gap-4 mt-4 pt-3 border-t border-white/10">
+                        <button onClick={() => speakText(msg.content)} className="text-xs font-mono text-[#88c0ff]/50 hover:text-[#88c0ff] transition-colors flex items-center gap-1.5">
+                          <Volume2 className="w-3.5 h-3.5" /> Listen
                         </button>
-                        <button onClick={() => { navigator.clipboard.writeText(msg.content); }} className="text-[10px] font-mono text-[#88c0ff]/40 hover:text-[#88c0ff] transition-colors flex items-center gap-1">
-                          <Copy className="w-3 h-3" /> Copy
+                        <button onClick={() => { navigator.clipboard.writeText(msg.content); }} className="text-xs font-mono text-[#88c0ff]/50 hover:text-[#88c0ff] transition-colors flex items-center gap-1.5">
+                          <Copy className="w-3.5 h-3.5" /> Copy
                         </button>
                       </div>
                     )}
