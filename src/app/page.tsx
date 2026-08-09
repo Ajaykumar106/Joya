@@ -30,14 +30,6 @@ export default function Home() {
   if (viewMode === "hermes") {
     return (
       <main className="w-screen h-screen overflow-hidden bg-[#020b1c] relative">
-        <div className="absolute top-3 right-5 z-50 flex gap-2">
-          <button 
-            onClick={() => setViewMode("aura3d")}
-            className="px-3 py-1 text-xs font-mono font-semibold bg-white/10 text-white border border-white/20 rounded-full hover:bg-white hover:text-[#020b1c] transition-all backdrop-blur-md flex items-center gap-1.5"
-          >
-            ✦ Switch to 3D Core
-          </button>
-        </div>
         <HermesUI />
       </main>
     );
@@ -51,7 +43,7 @@ export default function Home() {
             onClick={() => setViewMode("aura3d")}
             className="px-3 py-1 text-xs font-mono font-semibold bg-[#00e5ff]/20 text-[#00e5ff] border border-[#00e5ff]/40 rounded-full hover:bg-[#00e5ff] hover:text-black transition-all shadow-[0_0_10px_rgba(0,229,255,0.3)] flex items-center gap-1.5"
           >
-            ✦ Launch 3D HUD
+            Launch 3D HUD
           </button>
         </div>
         <DashboardUI />
@@ -66,7 +58,7 @@ export default function Home() {
           onClick={() => setViewMode("hermes")}
           className="px-3 py-1 text-xs font-mono font-semibold bg-[#00e5ff]/20 text-[#00e5ff] border border-[#00e5ff]/40 rounded-full hover:bg-[#00e5ff] hover:text-black transition-all shadow-[0_0_10px_rgba(0,229,255,0.3)] flex items-center gap-1.5"
         >
-          ✦ Switch to Joya
+          Switch to Joya
         </button>
       </div>
       
