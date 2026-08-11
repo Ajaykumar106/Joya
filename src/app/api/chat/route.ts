@@ -37,23 +37,70 @@ async function performResearch(query: string) {
     const html = await res.text();
     const $ = cheerio.load(html);
     let results: string[] = [];
-    $('.result-snippet').each((i, el) => {
-      if (i < 5) results.push($(el).text().trim());
+    
+    $('tr').each((i, el) => {
+      const titleNode = $(el).find('.result-link');
+      const title = titleNode.text().trim();
+      const link = titleNode.attr('href');
+      const snippet = $(el).find('.result-snippet').text().trim();
+      
+      if (title && link) {
+        results.push(`TITLE: ${title}\nURL: ${link}\nSNIPPET: ${snippet || 'No snippet available'}`);
+      } else if (snippet && results.length > 0) {
+        // sometimes snippet is on the next row
+        results[results.length - 1] += `\nSNIPPET: ${snippet}`;
+      }
     });
-    return results.length > 0 ? results.join('\n\n') : "No relevant information found on the web.";
+    
+    // limit to top 5
+    results = results.slice(0, 5);
+    return results.length > 0 ? results.join('\n\n---\n\n') : "No relevant information found on the web.";
   } catch (error: any) {
     return `Research failed: ${error.message}`;
   }
 }
 
-// ─── NVIDIA NIM API (Primary) + Render Fallback ───
-async function callNvidia(messages: any[]) {
-  const apiKey = process.env.NVIDIA_API_KEY;
-  const model = process.env.NVIDIA_MODEL || "nvidia/llama-3.1-nemotron-70b-instruct";
+async function performBrowse(url: string) {
+  try {
+    const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" } });
+    if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+    const html = await res.text();
+    const $ = cheerio.load(html);
+    
+    let images: string[] = [];
+    $('img').each((i, el) => {
+      let src = $(el).attr('src');
+      let alt = $(el).attr('alt');
+      if (src && !src.startsWith('http')) {
+        // Handle relative URLs
+        try { src = new URL(src, url).href; } catch(e) {}
+      }
+      if (src && alt && alt.length > 2 && src.startsWith('http')) {
+        images.push(`![${alt.replace(/\n/g, ' ')}](${src})`);
+      }
+    });
 
-  if (!apiKey) throw new Error("No NVIDIA key");
+    $('script, style, nav, footer, header, noscript, svg').remove();
+    let text = $('body').text().replace(/\s+/g, ' ').trim();
+    
+    let result = text.substring(0, 5000);
+    if (images.length > 0) {
+      result += "\n\n[PAGE IMAGES FOUND (Use these exactly as written in your response if in BLACK ALERT)]:\n" + images.slice(0, 10).join('\n');
+    }
+    return result;
+  } catch (error: any) {
+    return `Failed to browse ${url}: ${error.message}`;
+  }
+}
 
-  const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+// ─── GROQ API (Primary) + Render Fallback ───
+async function callGroq(messages: any[]) {
+  const apiKey = process.env.GROQ_API_KEY;
+  const model = process.env.GROQ_MODEL || "llama-3.1-70b-versatile";
+
+  if (!apiKey) throw new Error("No GROQ_API_KEY found in environment variables.");
+
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -70,8 +117,8 @@ async function callNvidia(messages: any[]) {
 
   if (!response.ok) {
     const errText = await response.text();
-    console.error(`NVIDIA API Error (${response.status}):`, errText);
-    throw new Error(`NVIDIA ${response.status}`);
+    console.error(`Groq API Error (${response.status}):`, errText);
+    throw new Error(`Groq ${response.status}`);
   }
 
   const data = await response.json();
@@ -92,9 +139,9 @@ async function callRenderFallback(messages: any[]) {
 
 async function callLLM(messages: any[]) {
   try {
-    return await callNvidia(messages);
+    return await callGroq(messages);
   } catch (err: any) {
-    console.warn(`[JOYA] NVIDIA failed (${err.message}), switching to fallback...`);
+    console.warn(`[JOYA] Groq failed (${err.message}), switching to fallback...`);
     return await callRenderFallback(messages);
   }
 }
@@ -121,20 +168,24 @@ export async function POST(req: Request) {
 
 3. WEB RESEARCH (search the live internet):
    <RESEARCH>search query</RESEARCH>
+   When you get research results, look for URLs. If you need more details from a specific URL, use the BROWSE tool.
 
-4. TACTICAL STRIKE SIMULATION:
+4. BROWSE WEBSITE (read full text of a webpage):
+   <BROWSE>url here</BROWSE>
+
+5. TACTICAL STRIKE SIMULATION:
    <LAUNCH>Country Name</LAUNCH>
 
-5. SCREEN SWITCHING:
+6. SCREEN SWITCHING:
    <SWITCH_MODE>AURA3D</SWITCH_MODE>
 
-6. ALERT PROTOCOLS (include in your response to change the UI):
+7. ALERT PROTOCOLS (include in your response to change the UI):
    <ALERT>RED</ALERT> — Fight/Defense mode. Be tactical, warn about threats, prepare defenses.
    <ALERT>YELLOW</ALERT> — Warning/Caution. Analyze danger, offer to lock down & protect data.
    <ALERT>BLACK</ALERT> — Deep Research mode. Ask boss what to research. Give detailed analysis.
    <ALERT>BLUE</ALERT> — Normal operations.
 
-7. DATA PANEL (push data to the right-side holographic panel for boss to see):
+8. DATA PANEL (push data to the right-side holographic panel for boss to see):
    <DATA_PANEL>content here</DATA_PANEL>
    Use this to show file lists, folder contents, research results, or any structured data. 
    Boss can see this on the right side of the screen while chatting with you on the left.
@@ -148,14 +199,15 @@ ${memoryString}
 - For casual chat, alerts, and commands: Keep responses SHORT and PUNCHY (2-3 sentences max).
 - For BLACK ALERT research: Give DETAILED, comprehensive analysis. Ask what boss wants to explore next.
 - **DESKTOP CONTROL (Agentic Workflow)**: You have full control over the boss's Windows computer.
-  - If boss says "Open YouTube" or "Open a website": Output <EXEC>start https://youtube.com</EXEC>
-  - If boss says "Search Google for X": Output <EXEC>start https://google.com/search?q=X</EXEC>
-  - If boss says "Open Notepad" or any app: Output <EXEC>start notepad</EXEC>
-  - If boss says "Open my documents" or a folder: Output <EXEC>explorer .</EXEC>
+  - YOU MUST NEVER say "Task complete" or "I have opened it" UNLESS you actually use the <EXEC> tool in your response.
+  - If boss says "Open YouTube" or "Open a website", you MUST output EXACTLY: <EXEC>start https://youtube.com</EXEC>
+  - If boss says "Search Google for X", you MUST output: <EXEC>start https://google.com/search?q=X</EXEC>
+  - If boss says "Open Notepad" or any app, you MUST output: <EXEC>start notepad</EXEC>
+  - If boss says "Open my documents" or a folder, you MUST output: <EXEC>explorer .</EXEC>
 - For file/folder operations: Use <EXEC> to list files, then push the file list to <DATA_PANEL>, and give your analysis in chat.
 - When boss says "open this folder" or asks about files: Use <EXEC>dir "path"</EXEC>, push results to <DATA_PANEL>, then explain what you see.
 - Always respond in English or Hinglish. NEVER use Hindi/Devanagari script.
-- If you use EXEC, SAVE_MEMORY, or RESEARCH tools, output ONLY the tool tag and nothing else. Wait for the system response before giving your final answer.
+- **CRITICAL**: If you need to use a tool (<EXEC>, <SAVE_MEMORY>, <RESEARCH>, <BROWSE>), output ONLY the tool tag and nothing else. Wait for the system response before giving your final conversational answer!
 - You can combine multiple tags in one response (e.g., <ALERT>RED</ALERT> with <DATA_PANEL>threat analysis</DATA_PANEL>).`;
 
     // Build message array with system prompt at the start
@@ -164,16 +216,18 @@ ${memoryString}
       ...messages.map((m: any) => ({ role: m.role === "ai" ? "assistant" : m.role, content: m.content }))
     ];
 
-    let maxLoops = 6;
+    let maxLoops = 15;
     let loopCount = 0;
     
     while (loopCount < maxLoops) {
       loopCount++;
       let reply = await callLLM(llmMessages);
+      console.log(`[LOOP ${loopCount} RAW LLM]:`, reply);
 
       const execMatch = reply.match(/<EXEC>([\s\S]*?)<\/EXEC>/);
       const memoryMatch = reply.match(/<SAVE_MEMORY>([\s\S]*?)<\/SAVE_MEMORY>/);
       const researchMatch = reply.match(/<RESEARCH>([\s\S]*?)<\/RESEARCH>/);
+      const browseMatch = reply.match(/<BROWSE>([\s\S]*?)<\/BROWSE>/);
       
       if (execMatch) {
         const command = execMatch[1].trim();
@@ -203,6 +257,12 @@ ${memoryString}
         console.log(`[JOYA RESEARCH] Searching: ${query}`);
         const searchResults = await performResearch(query);
         llmMessages.push({ role: "user", content: `[WEB RESEARCH RESULTS for "${query}"]:\n${searchResults}\n\nSynthesize this data. Push raw results to <DATA_PANEL> and give your analysis in the main response.` });
+      } else if (browseMatch) {
+        const url = browseMatch[1].trim();
+        llmMessages.push({ role: "assistant", content: `<BROWSE>${url}</BROWSE>` });
+        console.log(`[JOYA BROWSE] Fetching: ${url}`);
+        const pageText = await performBrowse(url);
+        llmMessages.push({ role: "user", content: `[WEBSITE CONTENT for "${url}"]:\n${pageText}\n\nSynthesize this data. Push raw results to <DATA_PANEL> and give your analysis in the main response.` });
       } else {
         return NextResponse.json({ reply });
       }

@@ -320,46 +320,6 @@ export default function HermesUI({ onToggleView }: { onToggleView?: () => void }
     return () => { ambientRef.current?.destroy(); };
   }, [booting]);
 
-  // Wake Word Engine (Always Listening)
-  useEffect(() => {
-    if (booting || !('webkitSpeechRecognition' in window)) return;
-    const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-    const wakeRecognition = new SR();
-    wakeRecognition.continuous = true;
-    wakeRecognition.interimResults = true;
-    wakeRecognition.lang = 'en-US';
-    
-    wakeRecognition.onresult = (event: any) => {
-      let transcript = '';
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        transcript += event.results[i][0].transcript;
-      }
-      const t = transcript.toLowerCase();
-      if (t.includes('wake up joya') || t.includes('hey joya') || t.includes('joya wake up')) {
-        // Trigger Electron window wakeup if possible
-        if (window.require) {
-          try {
-            const { ipcRenderer } = window.require('electron');
-            ipcRenderer.send('wake-up');
-          } catch(e) {}
-        }
-        // Auto-start live mode
-        if (!isLiveRef.current) {
-          setIsLive(true);
-          speak("I'm awake and listening, boss.");
-        }
-      }
-    };
-    wakeRecognition.onerror = () => {};
-    wakeRecognition.onend = () => {
-      // Auto-restart to keep listening
-      try { wakeRecognition.start(); } catch(e) {}
-    };
-    try { wakeRecognition.start(); } catch(e) {}
-    
-    return () => { try { wakeRecognition.stop(); } catch(e) {} };
-  }, [booting]);
-
   useEffect(() => {
     if (ambientRef.current && !booting) {
       ambientRef.current.setState(alertState);
@@ -586,3 +546,4 @@ export default function HermesUI({ onToggleView }: { onToggleView?: () => void }
     </div>
   );
 }
+
