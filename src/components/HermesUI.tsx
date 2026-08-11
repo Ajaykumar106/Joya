@@ -470,13 +470,39 @@ export default function HermesUI({ onToggleView }: { onToggleView?: () => void }
     if (!recognitionRef.current) {
       const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       const recognition = new SR();
-      recognition.continuous = false; recognition.interimResults = false; recognition.lang = 'en-US';
-      recognition.onresult = (event: any) => { const t = event.results[0][0].transcript; if (t.trim()) { setInput(t); sendMessage(t); } };
-      recognition.onerror = () => {};
-      recognition.onend = () => { if (isLiveRef.current && !window.speechSynthesis.speaking) { try { recognition.start(); } catch(e) {} } };
+      recognition.continuous = false; 
+      recognition.interimResults = false; 
+      recognition.lang = 'en-US';
+      
+      recognition.onresult = (event: any) => { 
+        const t = event.results[0][0].transcript; 
+        if (t.trim()) { 
+          setInput(t); 
+          sendMessage(t); 
+        } 
+      };
+      
+      recognition.onerror = (e: any) => {
+        console.error("Speech error:", e.error);
+        if (e.error === 'not-allowed') {
+          alert("Microphone access denied. Please allow it in your browser settings.");
+          setIsLive(false);
+        }
+      };
+      
+      recognition.onend = () => { 
+        if (isLiveRef.current && !window.speechSynthesis.speaking && !window.speechSynthesis.pending) { 
+          try { recognition.start(); } catch(e) {} 
+        } 
+      };
       recognitionRef.current = recognition;
     }
-    try { recognitionRef.current.start(); } catch(e) {}
+    
+    setTimeout(() => {
+      if (isLiveRef.current && !window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
+        try { recognitionRef.current.start(); } catch(e) {}
+      }
+    }, 100);
   };
 
   // Show boot sequence
