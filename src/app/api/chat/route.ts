@@ -190,6 +190,10 @@ export async function POST(req: Request) {
    Use this to show file lists, folder contents, research results, or any structured data. 
    Boss can see this on the right side of the screen while chatting with you on the left.
 
+9. OPEN VISUAL BROWSER (Visually opens a website for the boss to see):
+   <OPEN_BROWSER>https://en.wikipedia.org/wiki/Kakashi_Hatake</OPEN_BROWSER>
+   Use this when you want to literally pop open a website on the boss's screen!
+
 ## MEMORY BANK:
 ${memoryString}
 

@@ -279,6 +279,7 @@ export default function HermesUI({ onToggleView }: { onToggleView?: () => void }
   const [isTacticalMode, setIsTacticalMode] = useState(false);
   const [launchTarget, setLaunchTarget] = useState<string | null>(null);
   const [dataPanel, setDataPanel] = useState<string[]>([]);
+  const [browserUrl, setBrowserUrl] = useState<string | null>(null);
   const [audioMuted, setAudioMuted] = useState(true);
   const ambientRef = useRef<AmbientSoundEngine | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -380,6 +381,10 @@ export default function HermesUI({ onToggleView }: { onToggleView?: () => void }
       // Parse DATA_PANEL
       const dataPanelMatch = reply.match(/<DATA_PANEL>([\s\S]*?)<\/DATA_PANEL>/i);
       if (dataPanelMatch) { setDataPanel(prev => [...prev, dataPanelMatch[1].trim()]); reply = reply.replace(/<DATA_PANEL>[\s\S]*?<\/DATA_PANEL>/gi, "").trim(); }
+
+      // Parse OPEN_BROWSER
+      const browserMatch = reply.match(/<OPEN_BROWSER>(.*?)<\/OPEN_BROWSER>/i);
+      if (browserMatch) { setBrowserUrl(browserMatch[1].trim()); reply = reply.replace(/<OPEN_BROWSER>.*?<\/OPEN_BROWSER>/gi, "").trim(); }
 
       setHistory(prev => [...prev, { role: "ai", content: reply, time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }]);
       if (isLiveRef.current) speak(reply);
@@ -537,8 +542,22 @@ export default function HermesUI({ onToggleView }: { onToggleView?: () => void }
             </div>
           </div>
 
-          {/* Right: Data Panel */}
-          {dataPanel.length > 0 && (
+          {/* Right: Data Panel / Browser */}
+          {browserUrl && (
+            <div className={`w-full md:w-[600px] lg:w-[800px] h-full flex flex-col border-l ${borderColor} bg-[#000511] shrink-0 z-50 shadow-2xl`}>
+               <div className={`flex justify-between p-3 border-b ${borderColor} items-center bg-[#010a1a]`}>
+                  <div className="flex items-center gap-2">
+                    <Activity className={`w-4 h-4 ${textColor} animate-pulse`} />
+                    <span className={`text-xs ${textColor} font-bold tracking-[0.2em]`}>JOYA SECURE BROWSER</span>
+                  </div>
+                  <button onClick={() => setBrowserUrl(null)} className="p-1 rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-colors">
+                    <X className="w-4 h-4"/>
+                  </button>
+               </div>
+               <iframe src={browserUrl} className="w-full flex-1 bg-white" sandbox="allow-same-origin allow-scripts" title="Joya Browser" />
+            </div>
+          )}
+          {!browserUrl && dataPanel.length > 0 && (
             <DataPanel data={dataPanel} alertState={alertState} onClose={() => setDataPanel([])} />
           )}
         </div>
