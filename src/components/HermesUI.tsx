@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import ReactMarkdown from "react-markdown";
+import { motion, AnimatePresence } from "framer-motion";
 import BootSequence from "./BootSequence";
 import Avatar from "./Avatar";
 
@@ -234,34 +235,72 @@ function SystemHUD({ alertState }: { alertState: AlertState }) {
   );
 }
 
-/* ───────────────────────── DATA PANEL (RIGHT SIDE) ───────────────────────── */
-function DataPanel({ data, alertState, onClose }: { data: string[], alertState: AlertState, onClose: () => void }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [data]);
+/* ───────────────────────── FLOATING WIDGETS (EDITH HUD) ───────────────────────── */
+export type WidgetData = {
+  id: string;
+  type: 'browser' | 'map' | 'data' | 'terminal';
+  content: string | string[];
+};
 
+function FloatingWidget({ widget, alertState, onClose }: { widget: WidgetData, alertState: AlertState, onClose: () => void }) {
   const borderColor = alertState === "RED" ? "border-red-500/30" : alertState === "BLACK" ? "border-purple-500/30" : "border-[#00e5ff]/20";
   const headerColor = alertState === "RED" ? "text-red-400" : alertState === "BLACK" ? "text-purple-400" : "text-[#00e5ff]";
+  
+  const w = widget.type === 'browser' ? 800 : widget.type === 'map' ? 600 : 400;
+  const h = widget.type === 'browser' ? 600 : widget.type === 'map' ? 450 : 350;
 
-  if (data.length === 0) return null;
-
-  return (
-    <div className={`w-full md:w-[400px] lg:w-[450px] h-full flex flex-col border-l ${borderColor} bg-[#000511]/90 backdrop-blur-xl shrink-0`}>
-      <div className={`flex items-center justify-between px-4 py-2 border-b ${borderColor}`}>
-        <div className={`text-[10px] font-mono font-bold tracking-[0.2em] ${headerColor}`}>
-          DATA STREAM
-        </div>
-        <button onClick={onClose} className="text-white/40 hover:text-white transition-colors">
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3" style={{ scrollbarWidth: "none" }}>
-        {data.map((entry, i) => (
+  let inner = null;
+  if (widget.type === 'browser') {
+    inner = <iframe src={widget.content as string} className="w-full h-full bg-white" sandbox="allow-same-origin allow-scripts" title="Browser" />;
+  } else if (widget.type === 'map') {
+    inner = <iframe src={`https://maps.google.com/maps?q=${encodeURIComponent(widget.content as string)}&t=k&z=15&ie=UTF8&iwloc=&output=embed`} className="w-full h-full" title="Map" />;
+  } else if (widget.type === 'data') {
+    inner = (
+      <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ scrollbarWidth: "none" }}>
+        {(widget.content as string[]).map((entry, i) => (
           <div key={i} className={`text-[11px] md:text-[12px] font-mono leading-relaxed text-[#a0d0ff] whitespace-pre-wrap p-3 rounded-lg bg-[#000a1e]/80 border ${borderColor}`}>
             {entry}
           </div>
         ))}
       </div>
-    </div>
+    );
+  } else if (widget.type === 'terminal') {
+    inner = (
+      <div className="flex-1 overflow-y-auto p-4 bg-black/90">
+        <div className="text-[#00ff00] font-mono text-[11px] whitespace-pre-wrap">{widget.content}</div>
+      </div>
+    );
+  }
+
+  // Randomize initial positions slightly so they don't exactly stack perfectly if multiple open
+  const offsetX = Math.floor(Math.random() * 50);
+  const offsetY = Math.floor(Math.random() * 50);
+
+  return (
+    <motion.div 
+      drag 
+      dragMomentum={false}
+      initial={{ scale: 0.9, opacity: 0, y: 20 }}
+      animate={{ scale: 1, opacity: 1, y: 0 }}
+      exit={{ scale: 0.9, opacity: 0, y: 20 }}
+      className={`absolute flex flex-col bg-[#000511]/90 backdrop-blur-xl border ${borderColor} shadow-2xl rounded-lg overflow-hidden z-50 pointer-events-auto`}
+      style={{ width: w, height: h, top: 50 + offsetY, left: (widget.type === 'browser' ? 200 : 50) + offsetX }}
+    >
+      <div className={`flex items-center justify-between px-4 py-2 border-b ${borderColor} cursor-move bg-[#010a1a]`}>
+        <div className={`flex items-center gap-2 ${headerColor}`}>
+          <Activity className="w-4 h-4 animate-pulse" />
+          <span className="text-[10px] font-mono font-bold tracking-[0.2em]">
+            JOYA SECURE {widget.type.toUpperCase()}
+          </span>
+        </div>
+        <button onClick={onClose} onPointerDown={e => e.stopPropagation()} className="p-1 text-white/40 hover:text-white rounded-full hover:bg-white/10 transition-colors">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+      <div className="flex-1 w-full h-full bg-[#000511] relative pointer-events-auto">
+        {inner}
+      </div>
+    </motion.div>
   );
 }
 
@@ -278,8 +317,7 @@ export default function HermesUI({ onToggleView }: { onToggleView?: () => void }
   const [alertState, setAlertState] = useState<AlertState>("BLUE");
   const [isTacticalMode, setIsTacticalMode] = useState(false);
   const [launchTarget, setLaunchTarget] = useState<string | null>(null);
-  const [dataPanel, setDataPanel] = useState<string[]>([]);
-  const [browserUrl, setBrowserUrl] = useState<string | null>(null);
+  const [widgets, setWidgets] = useState<WidgetData[]>([]);
   const [audioMuted, setAudioMuted] = useState(true);
   const ambientRef = useRef<AmbientSoundEngine | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -378,13 +416,41 @@ export default function HermesUI({ onToggleView }: { onToggleView?: () => void }
       const launchMatch = reply.match(/<LAUNCH>(.*?)<\/LAUNCH>/i);
       if (launchMatch) { setLaunchTarget(launchMatch[1].trim()); setTimeout(() => setLaunchTarget(null), 100); reply = reply.replace(/<LAUNCH>.*?<\/LAUNCH>/gi, "").trim(); }
       
-      // Parse DATA_PANEL
-      const dataPanelMatch = reply.match(/<DATA_PANEL>([\s\S]*?)<\/DATA_PANEL>/i);
-      if (dataPanelMatch) { setDataPanel(prev => [...prev, dataPanelMatch[1].trim()]); reply = reply.replace(/<DATA_PANEL>[\s\S]*?<\/DATA_PANEL>/gi, "").trim(); }
+      // Parse Tags into Widgets
+      const newWidgets: WidgetData[] = [];
+      const timestamp = Date.now();
 
-      // Parse OPEN_BROWSER
+      const dataPanelMatch = reply.match(/<DATA_PANEL>([\s\S]*?)<\/DATA_PANEL>/i);
+      if (dataPanelMatch) {
+        setWidgets(prev => {
+          const existing = prev.find(w => w.type === 'data');
+          if (existing) {
+             existing.content = [...(existing.content as string[]), dataPanelMatch[1].trim()];
+             return [...prev];
+          }
+          return [...prev, { id: `data-${timestamp}`, type: 'data', content: [dataPanelMatch[1].trim()] }];
+        });
+        reply = reply.replace(/<DATA_PANEL>[\s\S]*?<\/DATA_PANEL>/gi, "").trim();
+      }
+
       const browserMatch = reply.match(/<OPEN_BROWSER>(.*?)<\/OPEN_BROWSER>/i);
-      if (browserMatch) { setBrowserUrl(browserMatch[1].trim()); reply = reply.replace(/<OPEN_BROWSER>.*?<\/OPEN_BROWSER>/gi, "").trim(); }
+      if (browserMatch) { 
+        newWidgets.push({ id: `browser-${timestamp}`, type: 'browser', content: browserMatch[1].trim() });
+        reply = reply.replace(/<OPEN_BROWSER>.*?<\/OPEN_BROWSER>/gi, "").trim(); 
+      }
+
+      const mapMatch = reply.match(/<MAP>(.*?)<\/MAP>/i);
+      if (mapMatch) { 
+        newWidgets.push({ id: `map-${timestamp}`, type: 'map', content: mapMatch[1].trim() });
+        reply = reply.replace(/<MAP>.*?<\/MAP>/gi, "").trim(); 
+      }
+
+      const execMatch = reply.match(/<EXEC>(.*?)<\/EXEC>/i);
+      if (execMatch) {
+        newWidgets.push({ id: `term-${timestamp}`, type: 'terminal', content: `> ${execMatch[1].trim()}\n\n[WAITING FOR SYSTEM RESPONSE...]` });
+      }
+
+      if (newWidgets.length > 0) setWidgets(prev => [...prev, ...newWidgets]);
 
       setHistory(prev => [...prev, { role: "ai", content: reply, time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }]);
       if (isLiveRef.current) speak(reply);
@@ -542,24 +608,17 @@ export default function HermesUI({ onToggleView }: { onToggleView?: () => void }
             </div>
           </div>
 
-          {/* Right: Data Panel / Browser */}
-          {browserUrl && (
-            <div className={`w-full md:w-[600px] lg:w-[800px] h-full flex flex-col border-l ${borderColor} bg-[#000511] shrink-0 z-50 shadow-2xl`}>
-               <div className={`flex justify-between p-3 border-b ${borderColor} items-center bg-[#010a1a]`}>
-                  <div className="flex items-center gap-2">
-                    <Activity className={`w-4 h-4 ${textColor} animate-pulse`} />
-                    <span className={`text-xs ${textColor} font-bold tracking-[0.2em]`}>JOYA SECURE BROWSER</span>
-                  </div>
-                  <button onClick={() => setBrowserUrl(null)} className="p-1 rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-colors">
-                    <X className="w-4 h-4"/>
-                  </button>
-               </div>
-               <iframe src={browserUrl} className="w-full flex-1 bg-white" sandbox="allow-same-origin allow-scripts" title="Joya Browser" />
-            </div>
-          )}
-          {!browserUrl && dataPanel.length > 0 && (
-            <DataPanel data={dataPanel} alertState={alertState} onClose={() => setDataPanel([])} />
-          )}
+          {/* EDITH HUD Widgets */}
+          <AnimatePresence>
+            {widgets.map(w => (
+              <FloatingWidget 
+                key={w.id} 
+                widget={w} 
+                alertState={alertState} 
+                onClose={() => setWidgets(prev => prev.filter(x => x.id !== w.id))} 
+              />
+            ))}
+          </AnimatePresence>
         </div>
       </div>
     </div>

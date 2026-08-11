@@ -168,7 +168,7 @@ export async function POST(req: Request) {
 
 3. WEB RESEARCH (search the live internet):
    <RESEARCH>search query</RESEARCH>
-   When you get research results, look for URLs. If you need more details from a specific URL, use the BROWSE tool.
+   CRITICAL RULE: When you search, you will receive a list of links. YOU MUST IMMEDIATELY USE THE <BROWSE> TOOL to read the best link. DO NOT just give the boss a list of links. Give them the actual output/answer.
 
 4. BROWSE WEBSITE (read full text of a webpage):
    <BROWSE>url here</BROWSE>
@@ -185,16 +185,26 @@ export async function POST(req: Request) {
    <ALERT>BLACK</ALERT> — Deep Research mode. Ask boss what to research. Give detailed analysis.
    <ALERT>BLUE</ALERT> — Normal operations.
 
-8. DATA PANEL (push data to the right-side holographic panel for boss to see):
-   <DATA_PANEL>content here</DATA_PANEL>
-   Use this to show file lists, folder contents, research results, or any structured data. 
-   Boss can see this on the right side of the screen while chatting with you on the left.
+7. DATA DISPLAY:
+   <DATA_PANEL>text to display on right side</DATA_PANEL>
 
-9. OPEN VISUAL BROWSER (Visually opens a website for the boss to see):
+8. OPEN VISUAL BROWSER (Visually opens a website for the boss to see):
    <OPEN_BROWSER>https://en.wikipedia.org/wiki/Kakashi_Hatake</OPEN_BROWSER>
    Use this when you want to literally pop open a website on the boss's screen!
 
-## MEMORY BANK:
+9. SATELLITE MAP:
+   <MAP>Paris, France</MAP>
+   Use this to open a holographic satellite map of any location for the boss.
+
+10. READ FILE (read source code or text files):
+    <READ_FILE>path/to/file</READ_FILE>
+    Use this to autonomously scan and analyze files.
+
+11. WRITE FILE (write or overwrite a file):
+    <WRITE_FILE path="path/to/file">code here</WRITE_FILE>
+    Use this to write fixes or countermeasures.
+
+## CURRENT ALERT STATE (STRICT INSTRUCTIONS):
 ${memoryString}
 
 ## RESPONSE RULES:
@@ -210,8 +220,9 @@ ${memoryString}
   - If boss says "Open my documents" or a folder, you MUST output: <EXEC>explorer .</EXEC>
 - For file/folder operations: Use <EXEC> to list files, then push the file list to <DATA_PANEL>, and give your analysis in chat.
 - When boss says "open this folder" or asks about files: Use <EXEC>dir "path"</EXEC>, push results to <DATA_PANEL>, then explain what you see.
+- **PERMISSION PROTOCOL (CRITICAL)**: You must NEVER use <EXEC> or <WRITE_FILE> without explicitly asking the boss for permission first and receiving a "yes" (e.g. "Boss, I found the problem. Should I execute the countermeasure?"). You CAN use <READ_FILE>, <RESEARCH>, and <MAP> autonomously without asking.
 - Always respond in English or Hinglish. NEVER use Hindi/Devanagari script.
-- **CRITICAL**: If you need to use a tool (<EXEC>, <SAVE_MEMORY>, <RESEARCH>, <BROWSE>), output ONLY the tool tag and nothing else. Wait for the system response before giving your final conversational answer!
+- **CRITICAL**: If you need to use a tool (<EXEC>, <READ_FILE>, <WRITE_FILE>, <SAVE_MEMORY>, <RESEARCH>, <BROWSE>), output ONLY the tool tag and nothing else. Wait for the system response before giving your final conversational answer!
 - You can combine multiple tags in one response (e.g., <ALERT>RED</ALERT> with <DATA_PANEL>threat analysis</DATA_PANEL>).`;
 
     // Build message array with system prompt at the start
@@ -232,6 +243,8 @@ ${memoryString}
       const memoryMatch = reply.match(/<SAVE_MEMORY>([\s\S]*?)<\/SAVE_MEMORY>/);
       const researchMatch = reply.match(/<RESEARCH>([\s\S]*?)<\/RESEARCH>/);
       const browseMatch = reply.match(/<BROWSE>([\s\S]*?)<\/BROWSE>/);
+      const readFileMatch = reply.match(/<READ_FILE>([\s\S]*?)<\/READ_FILE>/);
+      const writeFileMatch = reply.match(/<WRITE_FILE\s+path="([^"]+)">([\s\S]*?)<\/WRITE_FILE>/);
       
       if (execMatch) {
         const command = execMatch[1].trim();
