@@ -125,6 +125,36 @@ async function callGroq(messages: any[]) {
   return data.choices?.[0]?.message?.content || "";
 }
 
+async function callNvidiaFallback(messages: any[]) {
+  const apiKey = process.env.NVIDIA_API_KEY;
+  const model = process.env.NVIDIA_MODEL || "meta/llama-3.1-70b-instruct";
+  if (!apiKey) throw new Error("No NVIDIA_API_KEY found.");
+
+  const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      temperature: 0.7,
+      max_tokens: 1024,
+      top_p: 0.9,
+    })
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    console.error(`NVIDIA API Error (${response.status}):`, errText);
+    throw new Error(`NVIDIA ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || "";
+}
+
 async function callRenderFallback(messages: any[]) {
   console.log("[JOYA] Falling back to Render backend...");
   const response = await fetch("https://riya-backend-ujz7.onrender.com/api/chat", {
@@ -141,8 +171,13 @@ async function callLLM(messages: any[]) {
   try {
     return await callGroq(messages);
   } catch (err: any) {
-    console.warn(`[JOYA] Groq failed (${err.message}), switching to fallback...`);
-    return await callRenderFallback(messages);
+    console.warn(`[JOYA] Groq failed (${err.message}), switching to NVIDIA fallback...`);
+    try {
+       return await callNvidiaFallback(messages);
+    } catch (nvErr: any) {
+       console.warn(`[JOYA] NVIDIA failed (${nvErr.message}), switching to Render fallback...`);
+       return await callRenderFallback(messages);
+    }
   }
 }
 
