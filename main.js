@@ -1,7 +1,8 @@
-const { app, BrowserWindow, globalShortcut, ipcMain } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, Tray, Menu } = require('electron');
 const path = require('path');
 
 let mainWindow;
+let tray = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({

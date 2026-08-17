@@ -100,11 +100,24 @@ async function performBrowse(url: string) {
 }
 
 // ─── GROQ API (Primary) ───
-async function callGroq(messages: any[]) {
+async function callGroq(messages: any[], tools?: any[]) {
   const apiKey = process.env.GROQ_API_KEY;
   const model = process.env.GROQ_MODEL || "llama-3.1-70b-versatile";
 
   if (!apiKey) throw new Error("No GROQ_API_KEY found in environment variables.");
+
+  const body: any = {
+    model,
+    messages,
+    temperature: 0.7,
+    max_tokens: 1024,
+    top_p: 0.9,
+  };
+  
+  if (tools && tools.length > 0) {
+    body.tools = tools;
+    body.tool_choice = "auto";
+  }
 
   const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -112,13 +125,7 @@ async function callGroq(messages: any[]) {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${apiKey}`
     },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: 0.7,
-      max_tokens: 1024,
-      top_p: 0.9,
-    })
+    body: JSON.stringify(body)
   });
 
   if (!response.ok) {
@@ -128,14 +135,27 @@ async function callGroq(messages: any[]) {
   }
 
   const data = await response.json();
-  return data.choices?.[0]?.message?.content || "";
+  return data.choices?.[0]?.message || { content: "" };
 }
 
 // ─── NVIDIA API (Backup) ───
-async function callNvidiaFallback(messages: any[]) {
+async function callNvidiaFallback(messages: any[], tools?: any[]) {
   const apiKey = process.env.NVIDIA_API_KEY;
   const model = process.env.NVIDIA_MODEL || "meta/llama-3.1-70b-instruct";
   if (!apiKey) throw new Error("No NVIDIA_API_KEY found.");
+
+  const body: any = {
+    model,
+    messages,
+    temperature: 0.7,
+    max_tokens: 1024,
+    top_p: 0.9,
+  };
+  
+  if (tools && tools.length > 0) {
+    body.tools = tools;
+    body.tool_choice = "auto";
+  }
 
   const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
     method: "POST",
@@ -143,13 +163,7 @@ async function callNvidiaFallback(messages: any[]) {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${apiKey}`
     },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: 0.7,
-      max_tokens: 1024,
-      top_p: 0.9,
-    })
+    body: JSON.stringify(body)
   });
 
   if (!response.ok) {
@@ -159,15 +173,15 @@ async function callNvidiaFallback(messages: any[]) {
   }
 
   const data = await response.json();
-  return data.choices?.[0]?.message?.content || "";
+  return data.choices?.[0]?.message || { content: "" };
 }
 
-async function callLLM(messages: any[]) {
+async function callLLM(messages: any[], tools?: any[]) {
   try {
-    return await callGroq(messages);
+    return await callGroq(messages, tools);
   } catch (err: any) {
     console.warn(`[JOYA] Groq failed (${err.message}), switching to NVIDIA backup...`);
-    return await callNvidiaFallback(messages);
+    return await callNvidiaFallback(messages, tools);
   }
 }
 
@@ -247,9 +261,13 @@ ${memoryString}
   - If boss says "Open Notepad" or any app, you MUST output: <EXEC>start notepad</EXEC>
 - For file/folder operations: Use <EXEC> to list files, then push the file list to <DATA_PANEL>, and give your analysis in chat.
 - **IMAGE RENDERING (CRITICAL)**: If your research returns [IMAGES FOUND], you MUST render at least one of those images in your chat response using markdown syntax (e.g. \`![Image Description](URL)\`). 
-- **PERMISSION PROTOCOL (CRITICAL)**: You must NEVER use <EXEC> for system-altering commands (like deleting files) or <WRITE_FILE> without explicitly asking the boss for permission first. HOWEVER, for opening websites, playing YouTube, opening Instagram, or stopping Spotify, you CAN and MUST use <EXEC> autonomously without asking for permission.
+- **PERMISSION PROTOCOL (CRITICAL)**: You must NEVER execute system-altering terminal commands (like deleting files) or write to files without asking for permission. However, for safe commands like reading, you may proceed autonomously.
 - Always respond in English or Hinglish. NEVER use Hindi/Devanagari script.
-- **CRITICAL**: If you need to use a tool (<EXEC>, <READ_FILE>, <WRITE_FILE>, <SAVE_MEMORY>, <RESEARCH>, <BROWSE>), output ONLY the tool tag and nothing else. Wait for the system response before giving your final conversational answer!
+- **AGENTIC TOOLS**: You have access to backend functions (JSON tool calling) to execute commands, read files, and search the web. Use them! You can call multiple tools simultaneously.
+- **FRONTEND UI WIDGETS**: To display data on the screen, embed XML tags in your final text response:
+  - <DATA_PANEL>raw file data or terminal output</DATA_PANEL>
+  - <OPEN_BROWSER>url</OPEN_BROWSER>
+  - <MAP>location</MAP>
 - You can combine multiple tags in one response (e.g., <ALERT>RED</ALERT> with <DATA_PANEL>threat analysis</DATA_PANEL>).`;
 
     // Build message array with system prompt at the start
@@ -258,57 +276,62 @@ ${memoryString}
       ...messages.map((m: any) => ({ role: m.role === "ai" ? "assistant" : m.role, content: m.content }))
     ];
 
+    const tools = [
+      { type: "function", function: { name: "execute_terminal", description: "Execute a terminal command on the host.", parameters: { type: "object", properties: { command: { type: "string" } }, required: ["command"] } } },
+      { type: "function", function: { name: "save_memory", description: "Save key-value memory.", parameters: { type: "object", properties: { key: { type: "string" }, value: { type: "string" } }, required: ["key", "value"] } } },
+      { type: "function", function: { name: "perform_research", description: "Deep OSINT web research.", parameters: { type: "object", properties: { query: { type: "string" } }, required: ["query"] } } },
+      { type: "function", function: { name: "browse_website", description: "Read a specific URL.", parameters: { type: "object", properties: { url: { type: "string" } }, required: ["url"] } } },
+      { type: "function", function: { name: "read_file", description: "Read a local file.", parameters: { type: "object", properties: { path: { type: "string" } }, required: ["path"] } } },
+      { type: "function", function: { name: "write_file", description: "Write a local file.", parameters: { type: "object", properties: { path: { type: "string" }, content: { type: "string" } }, required: ["path", "content"] } } }
+    ];
+
     let maxLoops = 15;
     let loopCount = 0;
     
     while (loopCount < maxLoops) {
       loopCount++;
-      let reply = await callLLM(llmMessages);
-      console.log(`[LOOP ${loopCount} RAW LLM]:`, reply);
+      let responseMessage = await callLLM(llmMessages, tools);
+      console.log(`[LOOP ${loopCount} RAW LLM]:`, responseMessage);
 
-      const execMatch = reply.match(/<EXEC>([\s\S]*?)<\/EXEC>/);
-      const memoryMatch = reply.match(/<SAVE_MEMORY>([\s\S]*?)<\/SAVE_MEMORY>/);
-      const researchMatch = reply.match(/<RESEARCH>([\s\S]*?)<\/RESEARCH>/);
-      const browseMatch = reply.match(/<BROWSE>([\s\S]*?)<\/BROWSE>/);
-      const readFileMatch = reply.match(/<READ_FILE>([\s\S]*?)<\/READ_FILE>/);
-      const writeFileMatch = reply.match(/<WRITE_FILE\s+path="([^"]+)">([\s\S]*?)<\/WRITE_FILE>/);
-      
-      if (execMatch) {
-        const command = execMatch[1].trim();
-        llmMessages.push({ role: "assistant", content: `<EXEC>${command}</EXEC>` });
-        try {
-          const { stdout, stderr } = await execPromise(command);
-          const output = (stdout || stderr || "Command executed successfully.").slice(0, 3000);
-          llmMessages.push({ role: "user", content: `[TERMINAL OUTPUT]:\n${output}\n\nNow respond conversationally. If the output is a file/folder listing, push it to <DATA_PANEL> so boss can see it on the right screen.` });
-        } catch (err: any) {
-          llmMessages.push({ role: "user", content: `[TERMINAL ERROR]:\n${err.message}\n\nExplain the error to boss.` });
-        }
-      } else if (memoryMatch) {
-        const memData = memoryMatch[1].trim();
-        llmMessages.push({ role: "assistant", content: `<SAVE_MEMORY>${memData}</SAVE_MEMORY>` });
-        try {
-          const splitIndex = memData.indexOf(':');
-          if (splitIndex > -1) {
-            saveMemory(memData.slice(0, splitIndex).trim(), memData.slice(splitIndex + 1).trim());
-            llmMessages.push({ role: "user", content: `[SYSTEM]: Memory saved successfully. Respond to boss.` });
-          } else throw new Error("Invalid format.");
-        } catch (err: any) {
-          llmMessages.push({ role: "user", content: `[SYSTEM ERROR]: ${err.message}` });
-        }
-      } else if (researchMatch) {
-        const query = researchMatch[1].trim();
-        llmMessages.push({ role: "assistant", content: `<RESEARCH>${query}</RESEARCH>` });
-        console.log(`[JOYA RESEARCH] Searching: ${query}`);
-        const searchResults = await performResearch(query);
-        llmMessages.push({ role: "user", content: `[WEB RESEARCH RESULTS for "${query}"]:\n${searchResults}\n\nSynthesize this data. Push raw results to <DATA_PANEL> and give your analysis in the main response.` });
-      } else if (browseMatch) {
-        const url = browseMatch[1].trim();
-        llmMessages.push({ role: "assistant", content: `<BROWSE>${url}</BROWSE>` });
-        console.log(`[JOYA BROWSE] Fetching: ${url}`);
-        const pageText = await performBrowse(url);
-        llmMessages.push({ role: "user", content: `[WEBSITE CONTENT for "${url}"]:\n${pageText}\n\nSynthesize this data. Push raw results to <DATA_PANEL> and give your analysis in the main response.` });
+      if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
+        llmMessages.push(responseMessage);
+        
+        const toolPromises = responseMessage.tool_calls.map(async (toolCall: any) => {
+          const args = JSON.parse(toolCall.function.arguments);
+          let toolResult = "";
+          try {
+            if (toolCall.function.name === "execute_terminal") {
+              const { stdout, stderr } = await execPromise(args.command);
+              toolResult = (stdout || stderr || "Command executed successfully.").slice(0, 3000);
+            } else if (toolCall.function.name === "save_memory") {
+              saveMemory(args.key, args.value);
+              toolResult = "Memory saved.";
+            } else if (toolCall.function.name === "perform_research") {
+              toolResult = await performResearch(args.query);
+            } else if (toolCall.function.name === "browse_website") {
+              toolResult = await performBrowse(args.url);
+            } else if (toolCall.function.name === "read_file") {
+              toolResult = require('fs').readFileSync(args.path, 'utf8').slice(0, 5000);
+            } else if (toolCall.function.name === "write_file") {
+              require('fs').writeFileSync(args.path, args.content, 'utf8');
+              toolResult = "File written successfully.";
+            }
+          } catch (err: any) {
+            toolResult = `ERROR: ${err.message}`;
+          }
+          
+          return {
+            role: "tool",
+            tool_call_id: toolCall.id,
+            name: toolCall.function.name,
+            content: toolResult
+          };
+        });
+
+        const toolMessages = await Promise.all(toolPromises);
+        llmMessages.push(...toolMessages);
       } else {
-        return NextResponse.json({ reply });
+        return NextResponse.json({ reply: responseMessage.content });
       }
     }
 
