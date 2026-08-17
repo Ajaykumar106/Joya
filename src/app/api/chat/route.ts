@@ -28,33 +28,39 @@ function saveMemory(key: string, value: string) {
 
 async function performResearch(query: string) {
   try {
-    const res = await fetch("https://lite.duckduckgo.com/lite/", {
+    const apiKey = process.env.TAVILY_API_KEY;
+    if (!apiKey) {
+      return "ERROR: No TAVILY_API_KEY found in .env.local. Tell the boss to add their Tavily key to activate Deep OSINT.";
+    }
+
+    const res = await fetch("https://api.tavily.com/search", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: `q=${encodeURIComponent(query)}`
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        api_key: apiKey,
+        query: query,
+        search_depth: "advanced",
+        include_images: true,
+        include_answer: true,
+        max_results: 5
+      })
     });
-    if (!res.ok) throw new Error("Search engine blocked the request.");
-    const html = await res.text();
-    const $ = cheerio.load(html);
-    let results: string[] = [];
+
+    if (!res.ok) throw new Error(`Tavily API responded with ${res.status}`);
+    const data = await res.json();
     
-    $('tr').each((i, el) => {
-      const titleNode = $(el).find('.result-link');
-      const title = titleNode.text().trim();
-      const link = titleNode.attr('href');
-      const snippet = $(el).find('.result-snippet').text().trim();
-      
-      if (title && link) {
-        results.push(`TITLE: ${title}\nURL: ${link}\nSNIPPET: ${snippet || 'No snippet available'}`);
-      } else if (snippet && results.length > 0) {
-        // sometimes snippet is on the next row
-        results[results.length - 1] += `\nSNIPPET: ${snippet}`;
-      }
+    let output = `[TAVILY AI ANSWER]:\n${data.answer || 'No direct answer available.'}\n\n`;
+    
+    if (data.images && data.images.length > 0) {
+      output += `[IMAGES FOUND]:\n${data.images.slice(0, 5).join('\n')}\n\n`;
+    }
+
+    output += `[SEARCH RESULTS]:\n`;
+    data.results?.forEach((r: any) => {
+      output += `TITLE: ${r.title}\nURL: ${r.url}\nSNIPPET: ${r.content}\n\n`;
     });
-    
-    // limit to top 5
-    results = results.slice(0, 5);
-    return results.length > 0 ? results.join('\n\n---\n\n') : "No relevant information found on the web.";
+
+    return output;
   } catch (error: any) {
     return `Research failed: ${error.message}`;
   }
@@ -93,9 +99,40 @@ async function performBrowse(url: string) {
   }
 }
 
-// ─── NVIDIA API (Primary Backend) ───
+// ─── GROQ API (Primary) ───
+async function callGroq(messages: any[]) {
+  const apiKey = process.env.GROQ_API_KEY;
+  const model = process.env.GROQ_MODEL || "llama-3.1-70b-versatile";
 
-async function callLLM(messages: any[]) {
+  if (!apiKey) throw new Error("No GROQ_API_KEY found in environment variables.");
+
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      temperature: 0.7,
+      max_tokens: 1024,
+      top_p: 0.9,
+    })
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    console.error(`Groq API Error (${response.status}):`, errText);
+    throw new Error(`Groq ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || "";
+}
+
+// ─── NVIDIA API (Backup) ───
+async function callNvidiaFallback(messages: any[]) {
   const apiKey = process.env.NVIDIA_API_KEY;
   const model = process.env.NVIDIA_MODEL || "meta/llama-3.1-70b-instruct";
   if (!apiKey) throw new Error("No NVIDIA_API_KEY found.");
@@ -123,6 +160,15 @@ async function callLLM(messages: any[]) {
 
   const data = await response.json();
   return data.choices?.[0]?.message?.content || "";
+}
+
+async function callLLM(messages: any[]) {
+  try {
+    return await callGroq(messages);
+  } catch (err: any) {
+    console.warn(`[JOYA] Groq failed (${err.message}), switching to NVIDIA backup...`);
+    return await callNvidiaFallback(messages);
+  }
 }
 
 export async function POST(req: Request) {
@@ -200,6 +246,7 @@ ${memoryString}
   - If boss says "Search Google for X", you MUST output: <EXEC>start "https://google.com/search?q=X"</EXEC>
   - If boss says "Open Notepad" or any app, you MUST output: <EXEC>start notepad</EXEC>
 - For file/folder operations: Use <EXEC> to list files, then push the file list to <DATA_PANEL>, and give your analysis in chat.
+- **IMAGE RENDERING (CRITICAL)**: If your research returns [IMAGES FOUND], you MUST render at least one of those images in your chat response using markdown syntax (e.g. \`![Image Description](URL)\`). 
 - **PERMISSION PROTOCOL (CRITICAL)**: You must NEVER use <EXEC> for system-altering commands (like deleting files) or <WRITE_FILE> without explicitly asking the boss for permission first. HOWEVER, for opening websites, playing YouTube, opening Instagram, or stopping Spotify, you CAN and MUST use <EXEC> autonomously without asking for permission.
 - Always respond in English or Hinglish. NEVER use Hindi/Devanagari script.
 - **CRITICAL**: If you need to use a tool (<EXEC>, <READ_FILE>, <WRITE_FILE>, <SAVE_MEMORY>, <RESEARCH>, <BROWSE>), output ONLY the tool tag and nothing else. Wait for the system response before giving your final conversational answer!
