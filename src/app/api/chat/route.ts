@@ -93,39 +93,9 @@ async function performBrowse(url: string) {
   }
 }
 
-// ─── GROQ API (Primary) + Render Fallback ───
-async function callGroq(messages: any[]) {
-  const apiKey = process.env.GROQ_API_KEY;
-  const model = process.env.GROQ_MODEL || "llama-3.1-70b-versatile";
+// ─── NVIDIA API (Primary Backend) ───
 
-  if (!apiKey) throw new Error("No GROQ_API_KEY found in environment variables.");
-
-  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: 0.7,
-      max_tokens: 1024,
-      top_p: 0.9,
-    })
-  });
-
-  if (!response.ok) {
-    const errText = await response.text();
-    console.error(`Groq API Error (${response.status}):`, errText);
-    throw new Error(`Groq ${response.status}`);
-  }
-
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content || "";
-}
-
-async function callNvidiaFallback(messages: any[]) {
+async function callLLM(messages: any[]) {
   const apiKey = process.env.NVIDIA_API_KEY;
   const model = process.env.NVIDIA_MODEL || "meta/llama-3.1-70b-instruct";
   if (!apiKey) throw new Error("No NVIDIA_API_KEY found.");
@@ -153,32 +123,6 @@ async function callNvidiaFallback(messages: any[]) {
 
   const data = await response.json();
   return data.choices?.[0]?.message?.content || "";
-}
-
-async function callRenderFallback(messages: any[]) {
-  console.log("[JOYA] Falling back to Render backend...");
-  const response = await fetch("https://riya-backend-ujz7.onrender.com/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages, userName: "User" })
-  });
-  if (!response.ok) throw new Error(`Render backend responded with ${response.status}`);
-  const data = await response.json();
-  return data.reply || data.choices?.[0]?.message?.content || "";
-}
-
-async function callLLM(messages: any[]) {
-  try {
-    return await callGroq(messages);
-  } catch (err: any) {
-    console.warn(`[JOYA] Groq failed (${err.message}), switching to NVIDIA fallback...`);
-    try {
-       return await callNvidiaFallback(messages);
-    } catch (nvErr: any) {
-       console.warn(`[JOYA] NVIDIA failed (${nvErr.message}), switching to Render fallback...`);
-       return await callRenderFallback(messages);
-    }
-  }
 }
 
 export async function POST(req: Request) {
