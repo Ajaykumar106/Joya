@@ -1,5 +1,6 @@
 const { app, BrowserWindow, globalShortcut, ipcMain, Tray, Menu } = require('electron');
 const path = require('path');
+const fs = require('fs');
 
 let mainWindow;
 let tray = null;
@@ -10,6 +11,7 @@ function createWindow() {
     height: 800,
     frame: false, // Frameless window like Jarvis UI
     transparent: true,
+    icon: path.join(__dirname, 'public/tray-icon.png'),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
