@@ -150,6 +150,7 @@ async function callNvidiaFallback(messages: any[], tools?: any[]) {
     temperature: 0.7,
     max_tokens: 1024,
     top_p: 0.9,
+    stream: false
   };
   
   if (tools && tools.length > 0) {
@@ -218,14 +219,15 @@ export async function POST(req: Request) {
 6. SCREEN SWITCHING:
    <SWITCH_MODE>AURA3D</SWITCH_MODE>
 
-7. ALERT PROTOCOLS (include in your response to change the UI):
-   <ALERT>RED</ALERT> — Fight/Defense mode. Be tactical, warn about threats, prepare defenses.
-   <ALERT>YELLOW</ALERT> — Warning/Caution. Analyze danger, offer to lock down & protect data.
+6. ALERTS (Always use this as your first thought to set the mood):
+   <ALERT>RED</ALERT> — Hack detected, danger, system failure.
+   <ALERT>YELLOW</ALERT> — Investigating, cautious.
    <ALERT>BLACK</ALERT> — Deep Research mode. Ask boss what to research. Give detailed analysis.
    <ALERT>BLUE</ALERT> — Normal operations.
 
 7. DATA DISPLAY:
    <DATA_PANEL>text to display on right side</DATA_PANEL>
+   Use this to show raw terminal outputs or file contents on the HUD.
 
 8. OPEN VISUAL BROWSER (Visually opens a website for the boss to see):
    <OPEN_BROWSER>https://en.wikipedia.org/wiki/Kakashi_Hatake</OPEN_BROWSER>
@@ -251,24 +253,16 @@ ${memoryString}
 - Always provide a full, helpful sentence. (e.g., "I'm online and ready, boss." or "Initiating defense protocols now.")
 - For casual chat, alerts, and commands: Keep responses SHORT and PUNCHY (2-3 sentences max).
 - For BLACK ALERT research: Give DETAILED, comprehensive analysis. Ask what boss wants to explore next.
-- **DESKTOP CONTROL (Agentic Workflow)**: You have full control over the boss's Windows computer.
-  - YOU MUST NEVER say "Task complete" or "I have opened it" UNLESS you actually use the <EXEC> tool in your response.
-  - If boss says "play [song] on YouTube", you MUST output: <OPEN_BROWSER>https://www.youtube.com/embed?listType=search&list=[song]</OPEN_BROWSER>
-  - If boss says "stop" or "stop Spotify", you MUST output: <EXEC>Stop-Process -Name Spotify -ErrorAction SilentlyContinue</EXEC>
-  - If boss says "open my instagram reels", you MUST output: <EXEC>start "https://www.instagram.com/reels/"</EXEC>
-  - If boss says "Open YouTube", you MUST output: <OPEN_BROWSER>https://www.youtube.com/embed?listType=search&list=music</OPEN_BROWSER>
-  - If boss says "Search Google for X", you MUST output: <EXEC>start "https://google.com/search?q=X"</EXEC>
-  - If boss says "Open Notepad" or any app, you MUST output: <EXEC>start notepad</EXEC>
-- For file/folder operations: Use <EXEC> to list files, then push the file list to <DATA_PANEL>, and give your analysis in chat.
+- **DESKTOP CONTROL (Agentic Workflow)**: You have full access to backend functions (JSON tool calling) to execute commands, read files, and search the web. Use them! You can call multiple tools simultaneously.
+- If boss asks to open a website (like YouTube or Google), provide a clickable markdown link instead of trying to open it yourself.
+- For file/folder operations: Use `execute_terminal` to list files, then push the file list to <DATA_PANEL>, and give your analysis in chat.
 - **IMAGE RENDERING (CRITICAL)**: If your research returns [IMAGES FOUND], you MUST render at least one of those images in your chat response using markdown syntax (e.g. \`![Image Description](URL)\`). 
 - **PERMISSION PROTOCOL (CRITICAL)**: You must NEVER execute system-altering terminal commands (like deleting files) or write to files without asking for permission. However, for safe commands like reading, you may proceed autonomously.
 - Always respond in English or Hinglish. NEVER use Hindi/Devanagari script.
 - **AGENTIC TOOLS**: You have access to backend functions (JSON tool calling) to execute commands, read files, and search the web. Use them! You can call multiple tools simultaneously.
-- **FRONTEND UI WIDGETS**: To display data on the screen, embed XML tags in your final text response:
+- **FRONTEND UI WIDGETS**: To display data on the screen, embed this XML tag in your final text response:
   - <DATA_PANEL>raw file data or terminal output</DATA_PANEL>
-  - <OPEN_BROWSER>url</OPEN_BROWSER>
-  - <MAP>location</MAP>
-- You can combine multiple tags in one response (e.g., <ALERT>RED</ALERT> with <DATA_PANEL>threat analysis</DATA_PANEL>).`;
+- You can combine tags in one response (e.g., <ALERT>RED</ALERT> with <DATA_PANEL>threat analysis</DATA_PANEL>).`;
 
     // Build message array with system prompt at the start
     const llmMessages = [
@@ -294,7 +288,12 @@ ${memoryString}
       console.log(`[LOOP ${loopCount} RAW LLM]:`, responseMessage);
 
       if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
-        llmMessages.push(responseMessage);
+        // Sanitize the message before pushing to avoid API schema errors
+        llmMessages.push({
+          role: "assistant",
+          content: responseMessage.content || null,
+          tool_calls: responseMessage.tool_calls
+        });
         
         const toolPromises = responseMessage.tool_calls.map(async (toolCall: any) => {
           const args = JSON.parse(toolCall.function.arguments);

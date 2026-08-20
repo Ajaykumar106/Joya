@@ -21,20 +21,24 @@ function createWindow() {
   
   if (isDev) {
     // In development, load the Next.js server
-    mainWindow.loadURL('http://localhost:3000');
+    // In development, load the Next.js server on port 3333 to avoid port 3000 conflicts
+    mainWindow.loadURL('http://localhost:3333');
   } else {
     // In production, we'll serve the static export or the bundled server
-    mainWindow.loadURL('http://localhost:3000');
+    mainWindow.loadURL('http://localhost:3333');
   }
 
-    // Create tray icon
-    tray = new Tray(path.join(__dirname, 'public/tray-icon.png'));
-    const contextMenu = Menu.buildFromTemplate([
-      { label: 'Show Joya', click: () => mainWindow.show() },
-      { label: 'Quit', click: () => { app.isQuitting = true; app.quit(); } }
-    ]);
-    tray.setToolTip('Joya AI');
-    tray.setContextMenu(contextMenu);
+    // Create tray icon if it exists
+    const iconPath = path.join(__dirname, 'public/tray-icon.png');
+    if (fs.existsSync(iconPath)) {
+      tray = new Tray(iconPath);
+      const contextMenu = Menu.buildFromTemplate([
+        { label: 'Show Joya', click: () => mainWindow.show() },
+        { label: 'Quit', click: () => { app.isQuitting = true; app.quit(); } }
+      ]);
+      tray.setToolTip('Joya AI');
+      tray.setContextMenu(contextMenu);
+    }
 
   // Setup IPC for background wake word (kept for API triggers if needed)
   ipcMain.on('wake-up', () => {

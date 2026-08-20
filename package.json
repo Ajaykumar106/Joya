@@ -4,11 +4,11 @@
   "private": true,
   "main": "main.js",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3333",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 3333",
     "lint": "eslint",
-    "app:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\""
+    "app:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3333 && electron .\""
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
